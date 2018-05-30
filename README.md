@@ -36,7 +36,7 @@ BotService connector for wingbot.ai
 * [BotService](#BotService)
     * [new BotService(processor, options, [senderLogger])](#new_BotService_new)
     * [.processEvent(body)](#BotService+processEvent) ⇒ <code>Promise.&lt;Array.&lt;{message:Object, pageId:string}&gt;&gt;</code>
-    * [.verifyRequest(body, headers)](#BotService+verifyRequest)
+    * [.verifyRequest(body, headers)](#BotService+verifyRequest) ⇒ <code>Promise</code>
 
 <a name="new_BotService_new"></a>
 
@@ -69,13 +69,13 @@ Process Facebook request
 
 <a name="BotService+verifyRequest"></a>
 
-### botService.verifyRequest(body, headers)
+### botService.verifyRequest(body, headers) ⇒ <code>Promise</code>
 Verify Facebook webhook event
 
 **Kind**: instance method of [<code>BotService</code>](#BotService)  
 **Throws**:
 
-- <code>Error</code> when x-hub-signature does not match body signature
+- <code>Error</code> when authorization token is invalid or missing
 
 
 | Param | Type | Description |

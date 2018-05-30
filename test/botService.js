@@ -85,11 +85,11 @@ describe('<BotService>', function () {
         });
     });
 
-    it('Should create connector which responds with a "Hello World!" text', async () => {
+    it('should create connector which responds with a image text', async () => {
         const bot = new Router();
 
         bot.use((r, res) => {
-            res.text('Hello World!');
+            res.image('url/image.png');
         });
 
         const t = new Tester(bot);
@@ -108,23 +108,16 @@ describe('<BotService>', function () {
 
         await botService.processEvent(textMessage);
 
-        assert.deepEqual(sendFnMock.secondCall.args[0], {
-            body: {
-                conversation: INPUT_MESSAGE.conversation,
-                from: INPUT_MESSAGE.recipient,
-                locale: INPUT_MESSAGE.locale,
-                recipient: INPUT_MESSAGE.from,
-                replyToId: INPUT_MESSAGE.id,
-                type: 'message',
-                text: 'Hello World!'
-            },
-            headers: {
-                Authorization: 'Bearer xyz-access-token',
-                'Content-Type': 'application/json'
-            },
-            json: true,
-            method: 'POST',
-            uri: '/direct-line-api-url/v3/conversations/BxxupSfdLSxFBLNpnEo1Pz/activities/BxxupSfdLSxFBLNpnEo1Pz|0000000'
+        assert.deepEqual(sendFnMock.secondCall.args[0].body, {
+            conversation: INPUT_MESSAGE.conversation,
+            from: INPUT_MESSAGE.recipient,
+            locale: INPUT_MESSAGE.locale,
+            recipient: INPUT_MESSAGE.from,
+            replyToId: INPUT_MESSAGE.id,
+            type: 'message',
+            attachments: [
+                { contentType: 'image/png', contentUrl: 'url/image.png' }
+            ]
         });
     });
 
@@ -161,23 +154,14 @@ describe('<BotService>', function () {
 
         await botService.processEvent(textMessage);
 
-        assert.deepEqual(sendFnMock.secondCall.args[0], {
-            body: {
-                conversation: INPUT_MESSAGE.conversation,
-                from: INPUT_MESSAGE.recipient,
-                locale: INPUT_MESSAGE.locale,
-                recipient: INPUT_MESSAGE.from,
-                replyToId: INPUT_MESSAGE.id,
-                type: 'message',
-                text: '3'
-            },
-            headers: {
-                Authorization: 'Bearer xyz-access-token',
-                'Content-Type': 'application/json'
-            },
-            json: true,
-            method: 'POST',
-            uri: '/direct-line-api-url/v3/conversations/BxxupSfdLSxFBLNpnEo1Pz/activities/BxxupSfdLSxFBLNpnEo1Pz|0000000'
+        assert.deepEqual(sendFnMock.secondCall.args[0].body, {
+            conversation: INPUT_MESSAGE.conversation,
+            from: INPUT_MESSAGE.recipient,
+            locale: INPUT_MESSAGE.locale,
+            recipient: INPUT_MESSAGE.from,
+            replyToId: INPUT_MESSAGE.id,
+            type: 'message',
+            text: '3'
         });
     });
 
@@ -209,39 +193,23 @@ describe('<BotService>', function () {
         await botService.processEvent(textMessage);
 
         // it should be a fitst call
-        assert.deepEqual(sendFnMock.firstCall.args[0], {
-            body: {
-                conversation: INPUT_MESSAGE.conversation,
-                from: INPUT_MESSAGE.recipient,
-                locale: INPUT_MESSAGE.locale,
-                recipient: INPUT_MESSAGE.from,
-                replyToId: INPUT_MESSAGE.id,
-                type: 'message',
-                attachments: [
-                    {
-                        contentType: 'application/vnd.microsoft.card.hero',
-                        content: {
-                            text: 'Hello',
-                            buttons: [{
-                                title: 'Text',
-                                type: 'postBack',
-                                value: '{"action":"/action","data":{}}'
-                            }, {
-                                title: 'Url',
-                                type: 'openUrl',
-                                value: 'https://goo.gl'
-                            }]
-                        }
-                    }
-                ]
-            },
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            json: true,
-            method: 'POST',
-            uri: '/direct-line-api-url/v3/conversations/BxxupSfdLSxFBLNpnEo1Pz/activities/BxxupSfdLSxFBLNpnEo1Pz|0000000'
-        });
+        assert.deepEqual(sendFnMock.firstCall.args[0].body.attachments, [
+            {
+                contentType: 'application/vnd.microsoft.card.hero',
+                content: {
+                    text: 'Hello',
+                    buttons: [{
+                        title: 'Text',
+                        type: 'postBack',
+                        value: '{"action":"/action","data":{}}'
+                    }, {
+                        title: 'Url',
+                        type: 'openUrl',
+                        value: 'https://goo.gl'
+                    }]
+                }
+            }
+        ]);
     });
 
     it('transforms postbacks and carousels', async () => {
@@ -280,75 +248,57 @@ describe('<BotService>', function () {
 
         await botService.processEvent(textMessage);
 
-        assert.deepEqual(sendFnMock.secondCall.args[0], {
-            body: {
-                conversation: INPUT_MESSAGE.conversation,
-                from: INPUT_MESSAGE.recipient,
-                locale: INPUT_MESSAGE.locale,
-                recipient: INPUT_MESSAGE.from,
-                replyToId: INPUT_MESSAGE.id,
-                type: 'message',
-                attachmentLayout: 'carousel',
-                attachments: [
-                    {
-                        contentType: 'application/vnd.microsoft.card.hero',
-                        content: {
-                            title: 'title',
-                            subtitle: 'subtitle',
-                            images: [{
-                                url: '/local.png',
-                                tap: {
-                                    type: 'openUrl',
-                                    value: 'https://www.seznam.cz'
-                                }
-                            }],
-                            buttons: [{
-                                title: 'Button title',
-                                type: 'postBack',
-                                value: '{"action":"/action","data":{"actionData":1}}'
-                            }]
+        assert.deepEqual(sendFnMock.secondCall.args[0].body.attachments, [
+            {
+                contentType: 'application/vnd.microsoft.card.hero',
+                content: {
+                    title: 'title',
+                    subtitle: 'subtitle',
+                    images: [{
+                        url: '/local.png',
+                        tap: {
+                            type: 'openUrl',
+                            value: 'https://www.seznam.cz'
                         }
-                    },
-                    {
-                        contentType: 'application/vnd.microsoft.card.hero',
-                        content: {
-                            title: 'another',
-                            subtitle: 'subtitle',
-                            images: [{
-                                url: 'https://goo.gl/image.png',
-                                tap: {
-                                    type: 'postBack',
-                                    value: '{"action":"/action","data":{"actionData":1}}'
-                                }
-                            }],
-                            buttons: [{
-                                title: 'Local link with extension',
-                                type: 'openUrl',
-                                value: '/local/path#token=&senderId=random-string'
-                            }]
-                        }
-                    },
-                    {
-                        contentType: 'application/vnd.microsoft.card.hero',
-                        content: {
-                            title: 'cheap',
-                            buttons: [{
-                                title: 'Local link with extension',
-                                type: 'openUrl',
-                                value: 'https://www.cz#token=&senderId=random-string'
-                            }]
-                        }
-                    }
-                ]
+                    }],
+                    buttons: [{
+                        title: 'Button title',
+                        type: 'postBack',
+                        value: '{"action":"/action","data":{"actionData":1}}'
+                    }]
+                }
             },
-            headers: {
-                Authorization: 'Bearer xyz-access-token',
-                'Content-Type': 'application/json'
+            {
+                contentType: 'application/vnd.microsoft.card.hero',
+                content: {
+                    title: 'another',
+                    subtitle: 'subtitle',
+                    images: [{
+                        url: 'https://goo.gl/image.png',
+                        tap: {
+                            type: 'postBack',
+                            value: '{"action":"/action","data":{"actionData":1}}'
+                        }
+                    }],
+                    buttons: [{
+                        title: 'Local link with extension',
+                        type: 'openUrl',
+                        value: '/local/path#token=&senderId=random-string'
+                    }]
+                }
             },
-            json: true,
-            method: 'POST',
-            uri: '/direct-line-api-url/v3/conversations/BxxupSfdLSxFBLNpnEo1Pz/activities/BxxupSfdLSxFBLNpnEo1Pz|0000000'
-        });
+            {
+                contentType: 'application/vnd.microsoft.card.hero',
+                content: {
+                    title: 'cheap',
+                    buttons: [{
+                        title: 'Local link with extension',
+                        type: 'openUrl',
+                        value: 'https://www.cz#token=&senderId=random-string'
+                    }]
+                }
+            }
+        ]);
     });
 
     it('passes FB messages in raw format', async () => {

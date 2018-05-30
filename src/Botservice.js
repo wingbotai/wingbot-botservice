@@ -176,7 +176,8 @@ class BotService {
      *
      * @param {Object} body - parsed request body
      * @param {Object} headers - request headers
-     * @throws {Error} when x-hub-signature does not match body signature
+     * @returns {Promise}
+     * @throws {Error} when authorization token is invalid or missing
      */
     async verifyRequest (body, headers) {
         const verifier = this._getRequestValidator(body.channelId === 'emulator'

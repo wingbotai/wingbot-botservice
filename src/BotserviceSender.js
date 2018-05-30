@@ -111,9 +111,14 @@ class BotServiceSender extends ReturnSender {
             type: 'message'
         };
         switch (tplPayload.template_type) {
-            case 'generic': {
+            case 'generic':
+            case 'list': {
                 if (tplPayload.elements.length > 1) {
-                    Object.assign(ret, { attachmentLayout: 'carousel' });
+                    Object.assign(ret, {
+                        attachmentLayout: tplPayload.template_type === 'list'
+                            ? 'list'
+                            : 'carousel'
+                    });
                 }
 
                 Object.assign(ret, {
@@ -147,9 +152,36 @@ class BotServiceSender extends ReturnSender {
 
                 return ret;
             }
+
             default:
                 return null;
         }
+    }
+
+    _transformMediaAttachment ({ type, payload }) {
+        let attachment;
+
+        if (type === 'file') {
+            attachment = {
+                contentType: 'application/octet-stream',
+                contentUrl: payload.url
+            };
+        } else {
+            let [, suffix] = `${payload.url}`.match(/\.([a-z0-9]+)$/i);
+            if (!suffix) {
+                suffix = type === 'image' ? 'png' : 'mpeg';
+            }
+
+            attachment = {
+                contentType: `${type}/${suffix}`,
+                contentUrl: payload.url
+            };
+        }
+
+        return {
+            type: 'message',
+            attachments: [attachment]
+        };
     }
 
     /**
@@ -171,10 +203,22 @@ class BotServiceSender extends ReturnSender {
                 type: 'typing'
             };
         } else if (payload.message) {
-            if (payload.message.attachment
-                    && payload.message.attachment.type === 'template') {
+            if (payload.message.attachment) {
 
-                return this._transformTemplate(payload.message.attachment.payload);
+                switch (payload.message.attachment.type) {
+                    case 'template':
+                        return this._transformTemplate(payload.message.attachment.payload);
+                    case 'image':
+                    case 'video':
+                    case 'file':
+                        return this._transformMediaAttachment(payload.message.attachment);
+                    default:
+                }
+
+            }
+
+            if (!payload.message.text) {
+                return null;
             }
 
             const ret = {
