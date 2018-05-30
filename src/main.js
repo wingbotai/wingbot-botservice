@@ -3,10 +3,11 @@
  */
 'use strict';
 
-const Botservice = require('./Botservice');
-const BotserviceSender = require('./BotserviceSender');
+const BotService = require('./BotService');
+const BotServiceSender = require('./BotServiceSender');
 
 module.exports = {
-    Botservice,
-    BotserviceSender
+    BotService,
+    Botservice: BotService,
+    BotServiceSender
 };

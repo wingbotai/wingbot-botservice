@@ -6,7 +6,7 @@
 const request = require('request-promise-native');
 const { ReturnSender } = require('wingbot');
 
-class BotserviceSender extends ReturnSender {
+class BotServiceSender extends ReturnSender {
 
     /**
      *
@@ -248,4 +248,4 @@ class BotserviceSender extends ReturnSender {
 
 }
 
-module.exports = BotserviceSender;
+module.exports = BotServiceSender;

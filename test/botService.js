@@ -3,7 +3,8 @@
 const sinon = require('sinon');
 const { assert } = require('chai');
 const { Tester, Router } = require('wingbot');
-const Botservice = require('../src/Botservice');
+const BotService = require('../src/BotService');
+const jsonwebtoken = require('jsonwebtoken');
 
 const INPUT_MESSAGE = {
     botId: 1,
@@ -49,9 +50,9 @@ describe('<BotService>', function () {
 
         const sendFnMock = createSendMock();
 
-        const botService = new Botservice(t.processor, {
-            clientId: 'mock-id',
-            clientSecret: 'mock-secret',
+        const botService = new BotService(t.processor, {
+            appId: 'mock-id',
+            appSecret: 'mock-secret',
             requestLib: sendFnMock
         });
 
@@ -95,9 +96,9 @@ describe('<BotService>', function () {
 
         const sendFnMock = createSendMock();
 
-        const botService = new Botservice(t.processor, {
-            clientId: 'mock-id',
-            clientSecret: 'mock-secret',
+        const botService = new BotService(t.processor, {
+            appId: 'mock-id',
+            appSecret: 'mock-secret',
             requestLib: sendFnMock
         });
 
@@ -140,9 +141,9 @@ describe('<BotService>', function () {
 
         const sendFnMock = createSendMock();
 
-        const botService = new Botservice(t.processor, {
-            clientId: 'mock-id',
-            clientSecret: 'mock-secret',
+        const botService = new BotService(t.processor, {
+            appId: 'mock-id',
+            appSecret: 'mock-secret',
             requestLib: sendFnMock
         });
 
@@ -194,9 +195,9 @@ describe('<BotService>', function () {
 
         const sendFnMock = createSendMock();
 
-        const botService = new Botservice(t.processor, {
-            clientId: 'mock-id',
-            clientSecret: 'mock-secret',
+        const botService = new BotService(t.processor, {
+            appId: 'mock-id',
+            appSecret: 'mock-secret',
             requestLib: sendFnMock
         });
 
@@ -267,9 +268,9 @@ describe('<BotService>', function () {
 
         const sendFnMock = createSendMock();
 
-        const botService = new Botservice(t.processor, {
-            clientId: 'mock-id',
-            clientSecret: 'mock-secret',
+        const botService = new BotService(t.processor, {
+            appId: 'mock-id',
+            appSecret: 'mock-secret',
             requestLib: sendFnMock
         });
 
@@ -361,9 +362,9 @@ describe('<BotService>', function () {
 
         const sendFnMock = createSendMock();
 
-        const botService = new Botservice(t.processor, {
-            clientId: 'mock-id',
-            clientSecret: 'mock-secret',
+        const botService = new BotService(t.processor, {
+            appId: 'mock-id',
+            appSecret: 'mock-secret',
             requestLib: sendFnMock
         });
 
@@ -388,6 +389,110 @@ describe('<BotService>', function () {
                 }
             }
         );
+    });
+
+    const PRIVATE = `-----BEGIN RSA PRIVATE KEY-----
+MIIBOgIBAAJAeH4PccUIkg5y8/Opm3zcj+b4WR+e8mMjh4IS8ulAHI76Zhv3zxBX
+fBXyiqCzJego4NUNzHDrnpfs5KKM8/ExJwIDAQABAkA2w70LTa2ejNisjnPpSvAI
+q8b24wtgSbUNUw5/v4o3MBHkj6cQcn00wptuHd6WFKefFlrBe1AxIZcFjVBrzZ+5
+AiEA7pj3xLn7N3dJ0Wv2lv0pSUvxItY/OeAXw8Etsw+ePFsCIQCBR900bkmCuQXH
+VkI/8kxdYR49jgne8lXFo/TSQCDoJQIgdsxVOW98pM5RQ+OkoOMmRmd4heb1DiUE
+0CQEVA6ns9cCIQCAxJC7EYLc1ue/ldZlFTUk6YASdbC1RRFTy6wl40QjlQIhANMy
+lV2Xx/N93MF2NtuAmSsyf4VEu9aHfAj3WzMbKy8n
+-----END RSA PRIVATE KEY-----`;
+
+    const PUBLIC = `-----BEGIN PUBLIC KEY-----
+MFswDQYJKoZIhvcNAQEBBQADSgAwRwJAeH4PccUIkg5y8/Opm3zcj+b4WR+e8mMj
+h4IS8ulAHI76Zhv3zxBXfBXyiqCzJego4NUNzHDrnpfs5KKM8/ExJwIDAQAB
+-----END PUBLIC KEY-----`;
+
+    describe('#verifyRequest()', function () {
+
+        this.timeout(8000);
+
+        let bsKey;
+        let emulKey;
+        let bs;
+
+        before(async () => {
+            bs = new BotService({}, { appId: 'fo', appSecret: 'x', overPublic: PUBLIC });
+
+            // lets get emulator key
+            const [key] = await bs._getRequestValidator(BotService.EMULATOR)._getPublicKeys();
+            emulKey = key.kid;
+
+            // lets get botservice key
+            const keys = await bs._getRequestValidator(BotService.BOTSERVICE)._getPublicKeys();
+            bsKey = keys.find(k => (k.endorsements || []).includes('facebook')).kid;
+
+        });
+
+        it('proceeds, on token signature', async () => {
+            const jwtToken = jsonwebtoken
+                .sign({ appid: 'fo' }, PRIVATE, { keyid: emulKey, algorithm: 'RS256' });
+
+            await bs.verifyRequest({
+                channelId: 'emulator'
+            }, {
+                Authorization: `Bearer ${jwtToken}`
+            });
+
+            await bs.verifyRequest({
+                channelId: 'emulator'
+            }, {
+                Authorization: `Bearer ${jwtToken}`
+            });
+
+            const jwtFbToken = jsonwebtoken
+                .sign({ appid: 'fo' }, PRIVATE, { keyid: bsKey, algorithm: 'RS256' });
+
+            await bs.verifyRequest({
+                channelId: 'facebook'
+            }, {
+                Authorization: `Bearer ${jwtFbToken}`
+            });
+        });
+
+        it('fails with missing or bad header', async () => {
+            let err;
+            try {
+                await bs.verifyRequest({ channelId: 'emulator' }, { Authorization: 'xyz' });
+            } catch (e) {
+                err = e.message;
+            }
+            assert.strictEqual(err, 'Unauthorized: Missing or bad Token');
+
+            err = null;
+            try {
+                await bs.verifyRequest({ channelId: 'emulator' }, {});
+            } catch (e) {
+                err = e.message;
+            }
+            assert.strictEqual(err, 'Unauthorized: Missing or bad Token');
+        });
+
+        it('fails with bad jwt token', async () => {
+            let err;
+            try {
+                await bs.verifyRequest({ channelId: 'emulator' }, { Authorization: 'Bearer xyz' });
+            } catch (e) {
+                err = e.message;
+            }
+            assert.strictEqual(err, 'Unauthorized: Invalid token');
+        });
+
+        it('fails with jwt token without key', async () => {
+            const jwtFbToken = jsonwebtoken
+                .sign({ appid: 'fo' }, PRIVATE, { algorithm: 'RS256' });
+
+            let err;
+            try {
+                await bs.verifyRequest({ channelId: 'emulator' }, { Authorization: `Bearer ${jwtFbToken}` });
+            } catch (e) {
+                err = e.message;
+            }
+            assert.strictEqual(err, 'Unauthorized: Unable to find right key');
+        });
     });
 
 });

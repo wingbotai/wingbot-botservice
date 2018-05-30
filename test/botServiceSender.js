@@ -5,7 +5,7 @@
 
 const sinon = require('sinon');
 const assert = require('assert');
-const BotserviceSender = require('../src/BotserviceSender');
+const BotServiceSender = require('../src/BotServiceSender');
 
 const INPUT_MESSAGE = {
     sender: { id: 'random-string' },
@@ -36,11 +36,11 @@ function createLogger () {
     };
 }
 
-describe('<BotserviceSender>', () => {
+describe('<BotServiceSender>', () => {
 
     it('should create sender factory and handle message', function () {
         const logger = createLogger();
-        const sender = new BotserviceSender(INPUT_MESSAGE.meta, 'user-id', INPUT_MESSAGE, logger);
+        const sender = new BotServiceSender(INPUT_MESSAGE.meta, 'user-id', INPUT_MESSAGE, logger);
 
         sender.send({ wait: 50 });
         sender.send({ wait: 50 });

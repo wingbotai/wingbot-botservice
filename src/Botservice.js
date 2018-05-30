@@ -5,27 +5,39 @@
 
 const { Request } = require('wingbot');
 const request = require('request-promise-native');
-const BotserviceSender = require('./BotserviceSender');
+const BotServiceSender = require('./BotServiceSender');
 const parseAttachments = require('./parseAttachments');
+const RequestValidator = require('./RequestValidator');
+
+// OPENID URLS
+const BOTSERVICE = 'https://login.botframework.com/v1/.well-known/openidconfiguration';
+const EMULATOR = 'https://login.microsoftonline.com/botframework.com/v2.0/.well-known/openid-configuration';
 
 const ABS_TOKEN_EXPIRATION_WINDOW = 120000; // two minutes
 
-class Botservice {
+/**
+ * BotService connector for wingbot.ai
+ *
+ * @class
+ */
+class BotService {
 
     /**
      *
      * @param {Processor} processor
      * @param {Object} options
-     * @param {string} options.clientId - botservice client id
-     * @param {string} options.clientSecret - botservice client secret
+     * @param {string} options.appId - botservice client id
+     * @param {string} options.appSecret - botservice client secret
      * @param {string} [options.grantType] - boservice authentication grant_type
      * @param {string} [options.scope] - boservice authentication scope
      * @param {string} [options.uri] - boservice authentication uri
-     * @param {Function} [options.requestLib] - request library replacement
+     * @param {Function} [options.requestLib] - request library replacement for testing
+     * @param {string} [options.overPublic] - override public key for testing
      * @param {console} [senderLogger] - optional console like chat logger
      */
     constructor (processor, options, senderLogger = null) {
         this._options = {
+            appId: null,
             grantType: 'client_credentials',
             scope: 'https://api.botframework.com/.default',
             uri: 'https://login.microsoftonline.com/botframework.com/oauth2/v2.0/token',
@@ -41,6 +53,8 @@ class Botservice {
         this._absTokenExpiration = null;
 
         this._request = options.requestLib || request;
+
+        this._cachedValidators = new Map();
     }
 
     _getMeta (eventBody) {
@@ -62,15 +76,15 @@ class Botservice {
         }
 
         const {
-            uri, grantType, clientId, clientSecret, scope
+            uri, grantType, appId, appSecret, scope
         } = this._options;
 
         const data = await this._request({
             uri,
             form: {
                 grant_type: grantType,
-                client_id: clientId,
-                client_secret: clientSecret,
+                client_id: appId,
+                client_secret: appSecret,
                 scope
             },
             method: 'POST',
@@ -100,7 +114,7 @@ class Botservice {
             Object.assign(opts, { absToken });
         }
 
-        return new BotserviceSender(opts, opts.from.id, body, this._senderLogger, this._request);
+        return new BotServiceSender(opts, opts.from.id, body, this._senderLogger, this._request);
     }
 
     /**
@@ -140,6 +154,39 @@ class Botservice {
         return this.processor.processMessage(req, pageId, messageSender);
     }
 
+
+    /**
+     *
+     * @param {string} openIdUrl
+     * @returns {RequestValidator}
+     */
+    _getRequestValidator (openIdUrl) {
+        if (this._cachedValidators.has(openIdUrl)) {
+            return this._cachedValidators.get(openIdUrl);
+        }
+        const validator = new RequestValidator(openIdUrl, this._options);
+        this._cachedValidators.set(openIdUrl, validator);
+        return validator;
+    }
+
+    /**
+     * Verify Facebook webhook event
+     *
+     * @param {Object} body - parsed body
+     * @param {Object} headers
+     * @throws {Error} when x-hub-signature does not match body signature
+     */
+    async verifyRequest (body, headers) {
+        const verifier = this._getRequestValidator(body.channelId === 'emulator'
+            ? EMULATOR
+            : BOTSERVICE);
+
+        await verifier.verifyRequest(body, headers);
+    }
+
 }
 
-module.exports = Botservice;
+BotService.BOTSERVICE = BOTSERVICE;
+BotService.EMULATOR = EMULATOR;
+
+module.exports = BotService;
