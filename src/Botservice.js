@@ -24,7 +24,7 @@ class BotService {
 
     /**
      *
-     * @param {Processor} processor
+     * @param {Processor} processor - wingbot Processor instance
      * @param {Object} options
      * @param {string} options.appId - botservice client id
      * @param {string} options.appSecret - botservice client secret
@@ -104,6 +104,7 @@ class BotService {
 
     /**
      *
+     * @private
      * @param {bs.Activity} body - event body
      */
     async _createSender (body) {
@@ -157,6 +158,7 @@ class BotService {
 
     /**
      *
+     * @private
      * @param {string} openIdUrl
      * @returns {RequestValidator}
      */
@@ -172,8 +174,8 @@ class BotService {
     /**
      * Verify Facebook webhook event
      *
-     * @param {Object} body - parsed body
-     * @param {Object} headers
+     * @param {Object} body - parsed request body
+     * @param {Object} headers - request headers
      * @throws {Error} when x-hub-signature does not match body signature
      */
     async verifyRequest (body, headers) {

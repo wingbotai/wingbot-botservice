@@ -31,13 +31,11 @@ module.exports.bot = async (req, res) => {
 ## BotService
 BotService connector for wingbot.ai
 
-**Kind**: global class
+**Kind**: global class  
 
 * [BotService](#BotService)
     * [new BotService(processor, options, [senderLogger])](#new_BotService_new)
-    * [._createSender(body)](#BotService+_createSender)
     * [.processEvent(body)](#BotService+processEvent) ⇒ <code>Promise.&lt;Array.&lt;{message:Object, pageId:string}&gt;&gt;</code>
-    * [._getRequestValidator(openIdUrl)](#BotService+_getRequestValidator) ⇒ <code>RequestValidator</code>
     * [.verifyRequest(body, headers)](#BotService+verifyRequest)
 
 <a name="new_BotService_new"></a>
@@ -46,53 +44,35 @@ BotService connector for wingbot.ai
 
 | Param | Type | Description |
 | --- | --- | --- |
-| processor | <code>Processor</code> |  |
+| processor | <code>Processor</code> | wingbot Processor instance |
 | options | <code>Object</code> |  |
 | options.appId | <code>string</code> | botservice client id |
 | options.appSecret | <code>string</code> | botservice client secret |
 | [options.grantType] | <code>string</code> | boservice authentication grant_type |
 | [options.scope] | <code>string</code> | boservice authentication scope |
 | [options.uri] | <code>string</code> | boservice authentication uri |
-| [options.requestLib] | <code>function</code> | request library replacement |
-| [options.overPublic] | <code>string</code> | override public key |
+| [options.requestLib] | <code>function</code> | request library replacement for testing |
+| [options.overPublic] | <code>string</code> | override public key for testing |
 | [senderLogger] | <code>console</code> | optional console like chat logger |
-
-<a name="BotService+_createSender"></a>
-
-### botservice._createSender(body)
-**Kind**: instance method of [<code>BotService</code>](#BotService)
-
-| Param | Type | Description |
-| --- | --- | --- |
-| body | <code>bs.Activity</code> | event body |
 
 <a name="BotService+processEvent"></a>
 
-### botservice.processEvent(body) ⇒ <code>Promise.&lt;Array.&lt;{message:Object, pageId:string}&gt;&gt;</code>
+### botService.processEvent(body) ⇒ <code>Promise.&lt;Array.&lt;{message:Object, pageId:string}&gt;&gt;</code>
 Process Facebook request
 
-**Kind**: instance method of [<code>BotService</code>](#BotService)
-**Returns**: <code>Promise.&lt;Array.&lt;{message:Object, pageId:string}&gt;&gt;</code> - - unprocessed events
+**Kind**: instance method of [<code>BotService</code>](#BotService)  
+**Returns**: <code>Promise.&lt;Array.&lt;{message:Object, pageId:string}&gt;&gt;</code> - - unprocessed events  
 
 | Param | Type | Description |
 | --- | --- | --- |
 | body | <code>bs.Activity</code> | event body |
 
-<a name="BotService+_getRequestValidator"></a>
-
-### botservice._getRequestValidator(openIdUrl) ⇒ <code>RequestValidator</code>
-**Kind**: instance method of [<code>BotService</code>](#BotService)
-
-| Param | Type |
-| --- | --- |
-| openIdUrl | <code>string</code> |
-
 <a name="BotService+verifyRequest"></a>
 
-### botservice.verifyRequest(body, headers)
+### botService.verifyRequest(body, headers)
 Verify Facebook webhook event
 
-**Kind**: instance method of [<code>BotService</code>](#BotService)
+**Kind**: instance method of [<code>BotService</code>](#BotService)  
 **Throws**:
 
 - <code>Error</code> when x-hub-signature does not match body signature
@@ -100,6 +80,6 @@ Verify Facebook webhook event
 
 | Param | Type | Description |
 | --- | --- | --- |
-| body | <code>Object</code> | parsed body |
-| headers | <code>Object</code> |  |
+| body | <code>Object</code> | parsed request body |
+| headers | <code>Object</code> | request headers |
 
