@@ -1,0 +1,251 @@
+/*
+ * @author David Menger
+ */
+'use strict';
+
+const request = require('request-promise-native');
+const { ReturnSender } = require('wingbot');
+
+class BotserviceSender extends ReturnSender {
+
+    /**
+     *
+     * @param {Object} options
+     * @param {string} options.absToken
+     * @param {string} options.serviceUrl
+     * @param {string} options.id
+     * @param {Object} options.from
+     * @param {Object} options.recipient
+     * @param {Object} options.conversation
+     * @param {string} options.locale
+     * @param {string} options.channelId
+     * @param {string} [options.replyToId]
+     * @param {string} [options.absToken]
+     * @param {string} userId
+     * @param {Object} incommingMessage
+     * @param {console} [logger] - console like logger
+     * @param {Function} [req] - request library replacement
+     */
+    constructor (options, userId, incommingMessage, logger = null, req = request) {
+        super(options, userId, incommingMessage, logger);
+
+        this._options = options;
+
+        this.waits = true;
+
+        this._req = req;
+    }
+
+    _makeButton (fbButton) {
+        let ret;
+        switch (fbButton.type) {
+            case 'web_url':
+                ret = {
+                    type: 'openUrl',
+                    value: fbButton.url
+                };
+                break;
+            case 'postback':
+                ret = {
+                    type: 'postBack', // imBack?
+                    value: fbButton.payload
+                };
+                break;
+            default:
+                return null;
+        }
+        if (fbButton.title) Object.assign(ret, { title: fbButton.title });
+        return ret;
+    }
+
+    _makeButtons (buttons) {
+        return buttons
+            .map(btn => this._makeButton(btn))
+            .filter(btn => btn !== null);
+    }
+
+    _makeHeroCard (title, subtitle, text, imageUrl, defaultAction, buttons) {
+        const ret = {
+            contentType: 'application/vnd.microsoft.card.hero',
+            content: {}
+        };
+
+        if (title) Object.assign(ret.content, { title });
+        if (subtitle) Object.assign(ret.content, { subtitle });
+        if (text) Object.assign(ret.content, { text });
+
+        if (imageUrl) {
+            Object.assign(ret.content, {
+                images: [{
+                    url: imageUrl
+                }]
+            });
+
+            if (defaultAction) {
+                const tap = this._makeButton(defaultAction);
+
+                if (tap) {
+                    Object.assign(ret.content.images[0], {
+                        tap
+                    });
+                }
+            }
+        }
+
+        if (buttons) {
+            Object.assign(ret.content, {
+                buttons: this._makeButtons(buttons)
+            });
+        }
+
+        return ret;
+    }
+
+    /**
+     *
+     * @param {Object} tplPayload
+     * @returns {bs.SendMessage|null}
+     */
+    _transformTemplate (tplPayload) {
+        const ret = {
+            type: 'message'
+        };
+        switch (tplPayload.template_type) {
+            case 'generic': {
+                if (tplPayload.elements.length > 1) {
+                    Object.assign(ret, { attachmentLayout: 'carousel' });
+                }
+
+                Object.assign(ret, {
+                    attachments: tplPayload.elements
+                        .map(at => this._makeHeroCard(
+                            at.title,
+                            at.subtitle,
+                            null,
+                            at.image_url,
+                            at.default_action,
+                            at.buttons
+                        ))
+                });
+
+                return ret;
+            }
+
+            case 'button': {
+                Object.assign(ret, {
+                    attachments: [
+                        this._makeHeroCard(
+                            null,
+                            null,
+                            tplPayload.text,
+                            null,
+                            null,
+                            tplPayload.buttons
+                        )
+                    ]
+                });
+
+                return ret;
+            }
+            default:
+                return null;
+        }
+    }
+
+    /**
+     *
+     * @param {Object} payload
+     * @returns {bs.SendMessage|null}
+     */
+    _transformPayload (payload) {
+        if (this._options.channelId === 'facebook') {
+
+            return {
+                type: 'message',
+                channelData: payload
+            };
+        }
+
+        if (payload.sender_action === 'typing_on') {
+            return {
+                type: 'typing'
+            };
+        } else if (payload.message) {
+            if (payload.message.attachment
+                    && payload.message.attachment.type === 'template') {
+
+                return this._transformTemplate(payload.message.attachment.payload);
+            }
+
+            const ret = {
+                type: 'message',
+                text: `${payload.message.text}`
+            };
+
+            if (payload.message.quick_replies) {
+                const actions = payload.message.quick_replies
+                    .map(qr => ({
+                        type: 'imBack',
+                        title: qr.title,
+                        value: qr.payload
+                    }));
+
+                ret.suggestedActions = {
+                    to: [this._userId],
+                    actions
+                };
+            }
+
+            return ret;
+        }
+        return null;
+    }
+
+    async _send (payload) {
+        try {
+            const {
+                serviceUrl, conversation, replyToId, id, absToken, recipient, from, locale
+            } = this._options;
+
+            const transformed = this._transformPayload(payload);
+
+            if (!transformed) {
+                return null;
+            }
+
+            const body = Object.assign({
+                from: recipient,
+                conversation,
+                recipient: from,
+                replyToId: id,
+                locale
+            }, transformed);
+
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+
+            if (absToken) {
+                Object.assign(headers, { Authorization: `Bearer ${absToken}` });
+            }
+
+            const data = {
+                uri: `${serviceUrl.replace(/\/$/, '')}/v3/conversations/${conversation.id}/activities/${replyToId || id}`,
+                headers,
+                method: 'POST',
+                body,
+                json: true
+            };
+
+            const res = await this._req(data);
+
+            return res;
+        } catch (e) {
+            // @todo throw "disconnected error"
+            throw e;
+        }
+    }
+
+}
+
+module.exports = BotserviceSender;
