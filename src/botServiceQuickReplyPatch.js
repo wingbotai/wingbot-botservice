@@ -72,7 +72,7 @@ function botServiceQuickReplyPatch (bot, startAction = 'start') {
 
             if (match) {
                 postBack(match.action, match.data);
-                return Router.BREAK;
+                return Router.END;
             }
         }
 

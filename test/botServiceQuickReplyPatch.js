@@ -24,6 +24,10 @@ describe('botServiceQuickReplyPatch()', () => {
             res.text('Bar');
         });
 
+        bot.use((req, res) => {
+            res.text('No');
+        });
+
         const t = new Tester(bot);
 
         const req = Request.text(t.senderId, 'bar');
