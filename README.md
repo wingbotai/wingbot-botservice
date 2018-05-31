@@ -26,6 +26,24 @@ module.exports.bot = async (req, res) => {
 -----------------
 
 # API
+## Classes
+
+<dl>
+<dt><a href="#BotService">BotService</a></dt>
+<dd><p>BotService connector for wingbot.ai</p>
+</dd>
+</dl>
+
+## Functions
+
+<dl>
+<dt><a href="#botServiceQuickReplyPatch">botServiceQuickReplyPatch(bot, [startAction])</a> ⇒ <code>function</code></dt>
+<dd><p>Patch, which solves problem with BotFramework. Always, when conversationId is changed,
+middleware looks for matching quick replies from first text request. When there are some,
+it redirects user</p>
+</dd>
+</dl>
+
 <a name="BotService"></a>
 
 ## BotService
@@ -83,3 +101,34 @@ Verify Facebook webhook event
 | body | <code>Object</code> | parsed request body |
 | headers | <code>Object</code> | request headers |
 
+<a name="botServiceQuickReplyPatch"></a>
+
+## botServiceQuickReplyPatch(bot, [startAction]) ⇒ <code>function</code>
+Patch, which solves problem with BotFramework. Always, when conversationId is changed,
+middleware looks for matching quick replies from first text request. When there are some,
+it redirects user
+
+**Kind**: global function  
+**Returns**: <code>function</code> - - the middleware  
+
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| bot | <code>Router</code> |  | chatbot itself |
+| [startAction] | <code>string</code> | <code>&quot;start&quot;</code> | start action to fetch quick replies |
+
+**Example**  
+```javascript
+const { Router } = require('wingbot');
+const { botServiceQuickReplyPatch } = require('wingbot-botservice');
+
+const bot = new Router();
+
+// attach as first
+bot.use(botServiceQuickReplyPatch(bot, 'start'));
+
+bot.use('start', (req, res) => {
+    res.text('Hello', {
+        goto: 'Go to'
+    });
+});
+```
