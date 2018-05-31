@@ -201,7 +201,9 @@ describe('<BotService>', function () {
                     buttons: [{
                         title: 'Text',
                         type: 'postBack',
-                        value: '{"action":"/action","data":{}}'
+                        value: {
+                            payload: '{"action":"/action","data":{}}'
+                        }
                     }, {
                         title: 'Url',
                         type: 'openUrl',
@@ -243,7 +245,7 @@ describe('<BotService>', function () {
         });
 
         const textMessage = Object.assign({}, INPUT_MESSAGE, {
-            value: 'go'
+            value: { payload: 'go' }
         });
 
         await botService.processEvent(textMessage);
@@ -264,7 +266,9 @@ describe('<BotService>', function () {
                     buttons: [{
                         title: 'Button title',
                         type: 'postBack',
-                        value: '{"action":"/action","data":{"actionData":1}}'
+                        value: {
+                            payload: '{"action":"/action","data":{"actionData":1}}'
+                        }
                     }]
                 }
             },
@@ -277,7 +281,9 @@ describe('<BotService>', function () {
                         url: 'https://goo.gl/image.png',
                         tap: {
                             type: 'postBack',
-                            value: '{"action":"/action","data":{"actionData":1}}'
+                            value: {
+                                payload: '{"action":"/action","data":{"actionData":1}}'
+                            }
                         }
                     }],
                     buttons: [{

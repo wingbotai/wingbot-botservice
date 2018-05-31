@@ -47,8 +47,8 @@ class BotServiceSender extends ReturnSender {
                 break;
             case 'postback':
                 ret = {
-                    type: 'postBack', // imBack?
-                    value: fbButton.payload
+                    type: 'postBack',
+                    value: { payload: fbButton.payload }
                 };
                 break;
             default:
@@ -231,7 +231,7 @@ class BotServiceSender extends ReturnSender {
                     .map(qr => ({
                         type: 'imBack',
                         title: qr.title,
-                        value: qr.payload
+                        value: qr.title
                     }));
 
                 ret.suggestedActions = {

@@ -130,11 +130,13 @@ class BotService {
 
         let req;
 
-        if (body.type === 'message') {
+        if (body.channelId === 'facebook' && body.channelData) {
+            req = body.channelData;
+        } else if (body.type === 'message') {
 
-            if (body.value) {
+            if (body.value && body.value.payload) {
                 // quick reply
-                req = Request.quickReplyText(senderId, body.text, body.value);
+                req = Request.quickReplyText(senderId, body.text, body.value.payload);
             } else if (body.text) {
                 req = Request.text(senderId, body.text);
             }
@@ -146,9 +148,15 @@ class BotService {
             && body.membersAdded[0].id === body.recipient.id) {
 
             req = Request.postBack(senderId, this._options.welcomeAction);
-        } else {
+        }
+
+        if (!req) {
             return [];
         }
+
+        Object.assign(req, {
+            _conversationId: body.conversation.id
+        });
 
         const messageSender = await this._createSender(body);
 
