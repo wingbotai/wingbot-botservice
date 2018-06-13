@@ -2,12 +2,16 @@
 
 const sinon = require('sinon');
 const { assert } = require('chai');
-const { Tester, Router } = require('wingbot');
+const {
+    Tester, Router, Request, Processor, MemoryStateStorage
+} = require('wingbot');
 const BotService = require('../src/BotService');
+const BotServiceSender = require('../src/BotServiceSender');
 const jsonwebtoken = require('jsonwebtoken');
 
 const INPUT_MESSAGE = {
     botId: 1,
+    channelId: 'random',
     sender: { id: 'random-string' },
     message: { text: 'Hello world' },
     type: 'message',
@@ -33,9 +37,12 @@ function createSendMock () {
             return '{"access_token":"xyz-access-token"}';
         }
 
-        return INPUT_MESSAGE;
+        return req.body;
     });
 }
+
+const SENDER_ID = 'senderid';
+const PAGE_ID = 'pageid';
 
 describe('<BotService>', function () {
 
@@ -69,7 +76,7 @@ describe('<BotService>', function () {
             body: {
                 conversation: INPUT_MESSAGE.conversation,
                 from: INPUT_MESSAGE.recipient,
-                locale: INPUT_MESSAGE.locale,
+                // locale: INPUT_MESSAGE.locale,
                 recipient: INPUT_MESSAGE.from,
                 replyToId: INPUT_MESSAGE.id,
                 type: 'message',
@@ -111,7 +118,7 @@ describe('<BotService>', function () {
         assert.deepEqual(sendFnMock.secondCall.args[0].body, {
             conversation: INPUT_MESSAGE.conversation,
             from: INPUT_MESSAGE.recipient,
-            locale: INPUT_MESSAGE.locale,
+            // locale: INPUT_MESSAGE.locale,
             recipient: INPUT_MESSAGE.from,
             replyToId: INPUT_MESSAGE.id,
             type: 'message',
@@ -157,7 +164,7 @@ describe('<BotService>', function () {
         assert.deepEqual(sendFnMock.secondCall.args[0].body, {
             conversation: INPUT_MESSAGE.conversation,
             from: INPUT_MESSAGE.recipient,
-            locale: INPUT_MESSAGE.locale,
+            // locale: INPUT_MESSAGE.locale,
             recipient: INPUT_MESSAGE.from,
             replyToId: INPUT_MESSAGE.id,
             type: 'message',
@@ -449,6 +456,59 @@ h4IS8ulAHI76Zhv3zxBXfBXyiqCzJego4NUNzHDrnpfs5KKM8/ExJwIDAQAB
             }
             assert.strictEqual(err, 'Unauthorized: Unable to find right key');
         });
+    });
+
+    describe('#sendMessage()', () => {
+
+        it('is able to send message in any time, when there is a message in state', async () => {
+
+            const bot = new Router();
+
+            bot.use('start', (req, res) => {
+                res.text('Hello');
+            });
+
+            const sendFnMock = createSendMock();
+
+            const stateStorage = new MemoryStateStorage();
+
+            const p = new Processor(bot, {
+                stateStorage
+            });
+
+            const botService = new BotService(p, {
+                appId: 'mock-id',
+                appSecret: 'mock-secret',
+                requestLib: sendFnMock
+            });
+
+            let message = Request.postBack(SENDER_ID, 'start');
+
+            const messageSender = new BotServiceSender(
+                {},
+                SENDER_ID,
+                Object.assign({}, INPUT_MESSAGE, { channelId: 'emulator' }),
+                console,
+                sendFnMock
+            );
+
+            // @ts-ignore
+            await p.processMessage(message, PAGE_ID, messageSender);
+
+            message = Request.postBack(SENDER_ID, 'start');
+
+            const r = await botService.processMessage(message, SENDER_ID, PAGE_ID);
+
+            assert.strictEqual(r.status, 200);
+            assert.strictEqual(r.responses.length, 1);
+            assert.strictEqual(r.responses[0].text, 'Hello');
+
+            assert.strictEqual(sendFnMock.callCount, 2);
+            assert.strictEqual(sendFnMock.secondCall.args[0].body.text, 'Hello');
+
+
+        });
+
     });
 
 });

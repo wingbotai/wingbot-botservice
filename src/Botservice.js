@@ -57,19 +57,6 @@ class BotService {
         this._cachedValidators = new Map();
     }
 
-    _getMeta (eventBody) {
-        return {
-            id: eventBody.id,
-            from: eventBody.from,
-            conversation: eventBody.conversation,
-            recipient: eventBody.recipient,
-            replyToId: eventBody.replyToId,
-            locale: eventBody.locale,
-            serviceUrl: eventBody.serviceUrl,
-            channelId: eventBody.channelId
-        };
-    }
-
     async _getToken () {
         if (this._absToken && this._absTokenExpiration >= Date.now()) {
             return this._absToken;
@@ -102,20 +89,54 @@ class BotService {
         return this._absToken;
     }
 
+    async processMessage (message, senderId, pageId) {
+
+        // fetch message data from the state
+        const state = await this.processor.stateStorage.getState(senderId, pageId);
+
+        if (!state || !state._lastMessage) {
+            return {
+                status: 204, // not sent
+                responses: []
+            };
+        }
+
+        const {
+            from, recipient, serviceUrl, channelId, conversation
+        } = state._lastMessage;
+
+        // synthetize message without content
+        const botsetviceEvent = {
+            from,
+            recipient,
+            serviceUrl,
+            timestamp: new Date(message.timestamp).toISOString(),
+            channelId,
+            conversation,
+            type: 'message'
+        };
+
+
+        // simulate incomming event
+        const messageSender = await this._createSender(botsetviceEvent);
+
+        return this.processor.processMessage(message, pageId, messageSender);
+    }
+
     /**
      *
      * @private
      * @param {bs.Activity} body - event body
      */
     async _createSender (body) {
-        const opts = this._getMeta(body);
+        const opts = {};
 
         if (body.channelId !== 'emulator') {
             const absToken = await this._getToken();
             Object.assign(opts, { absToken });
         }
 
-        return new BotServiceSender(opts, opts.from.id, body, this._senderLogger, this._request);
+        return new BotServiceSender(opts, body.from.id, body, this._senderLogger, this._request);
     }
 
     /**
@@ -125,10 +146,15 @@ class BotService {
      * @returns {Promise<Array<{message:Object,pageId:string}>>} - unprocessed events
      */
     async processEvent (body) {
+        if (!body.from) {
+            return [];
+        }
         const senderId = body.from.id;
         const pageId = body.channelId;
 
         let req;
+
+        const timestamp = new Date(body.timestamp).getTime();
 
         if (body.channelId === 'facebook' && body.channelData) {
             req = body.channelData;
@@ -136,9 +162,9 @@ class BotService {
 
             if (body.value && body.value.payload) {
                 // quick reply
-                req = Request.quickReplyText(senderId, body.text, body.value.payload);
+                req = Request.quickReplyText(senderId, body.text, body.value.payload, timestamp);
             } else if (body.text) {
-                req = Request.text(senderId, body.text);
+                req = Request.text(senderId, body.text, timestamp);
             }
 
             req = parseAttachments(body, req);
@@ -147,7 +173,14 @@ class BotService {
             && body.membersAdded
             && body.membersAdded[0].id === body.recipient.id) {
 
-            req = Request.postBack(senderId, this._options.welcomeAction);
+            req = Request.postBack(
+                senderId,
+                this._options.welcomeAction,
+                {},
+                null,
+                {},
+                timestamp
+            );
         }
 
         if (!req) {

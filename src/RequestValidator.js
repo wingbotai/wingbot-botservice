@@ -120,14 +120,15 @@ class RequestValidator {
             throw this._getUnauthorizedError('Unable to find right key');
         }
 
+        let verified;
         try {
-            const verified = await this._verify(token, key);
-
-            if (verified.appid !== this._options.appId) {
-                throw this._getUnauthorizedError('Unable to verify App Id');
-            }
+            verified = await this._verify(token, key);
         } catch (e) {
             throw this._getUnauthorizedError('Unable to verify token');
+        }
+
+        if (verified.aud !== this._options.appId) {
+            throw this._getUnauthorizedError('Unable to verify App Id');
         }
     }
 

@@ -331,7 +331,7 @@ export interface SendMessage {
   /**
    * @member {Date} [timestamp] UTC Time when message was sent (set by service)
    */
-  timestamp?: Date;
+  timestamp?: Date|string;
   /**
    * @member {Date} [localTimestamp] Local time when message was sent (set by
    * client, Ex: 2016-09-23T13:07:49.4714686-07:00)

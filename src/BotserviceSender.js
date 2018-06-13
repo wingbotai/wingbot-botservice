@@ -11,18 +11,17 @@ class BotServiceSender extends ReturnSender {
     /**
      *
      * @param {Object} options
-     * @param {string} options.absToken
-     * @param {string} options.serviceUrl
-     * @param {string} options.id
-     * @param {Object} options.from
-     * @param {Object} options.recipient
-     * @param {Object} options.conversation
-     * @param {string} options.locale
-     * @param {string} options.channelId
-     * @param {string} [options.replyToId]
      * @param {string} [options.absToken]
      * @param {string} userId
      * @param {Object} incommingMessage
+     * @param {string} incommingMessage.serviceUrl
+     * @param {Object} incommingMessage.from
+     * @param {Object} incommingMessage.recipient
+     * @param {Object} incommingMessage.conversation
+     * @param {string} incommingMessage.locale
+     * @param {string} incommingMessage.channelId
+     * @param {string} [incommingMessage.id]
+     * @param {string} [incommingMessage.replyToId]
      * @param {console} [logger] - console like logger
      * @param {Function} [req] - request library replacement
      */
@@ -190,7 +189,7 @@ class BotServiceSender extends ReturnSender {
      * @returns {bs.SendMessage|null}
      */
     _transformPayload (payload) {
-        if (this._options.channelId === 'facebook') {
+        if (this._incommingMessage.channelId === 'facebook') {
 
             return {
                 type: 'message',
@@ -247,23 +246,36 @@ class BotServiceSender extends ReturnSender {
 
     async _send (payload) {
         try {
-            const {
-                serviceUrl, conversation, replyToId, id, absToken, recipient, from, locale
-            } = this._options;
-
             const transformed = this._transformPayload(payload);
 
             if (!transformed) {
                 return null;
             }
 
-            const body = Object.assign({
+            const {
+                absToken
+            } = this._options;
+
+            const {
+                serviceUrl, conversation, id, recipient, from
+            } = this._incommingMessage;
+
+            const body = {
                 from: recipient,
                 conversation,
-                recipient: from,
-                replyToId: id,
-                locale
-            }, transformed);
+                recipient: from
+            };
+
+            let urlPath;
+
+            if (id) {
+                Object.assign(body, { replyToId: id });
+                urlPath = `/v3/conversations/${conversation.id}/activities/${id}`;
+            } else {
+                urlPath = `/v3/conversations/${conversation.id}/activities`;
+            }
+
+            Object.assign(body, transformed);
 
             const headers = {
                 'Content-Type': 'application/json'
@@ -274,7 +286,7 @@ class BotServiceSender extends ReturnSender {
             }
 
             const data = {
-                uri: `${serviceUrl.replace(/\/$/, '')}/v3/conversations/${conversation.id}/activities/${replyToId || id}`,
+                uri: `${serviceUrl.replace(/\/$/, '')}${urlPath}`,
                 headers,
                 method: 'POST',
                 body,
@@ -288,6 +300,12 @@ class BotServiceSender extends ReturnSender {
             // @todo throw "disconnected error"
             throw e;
         }
+    }
+
+    async modifyStateBeforeStore () {
+        return {
+            _lastMessage: this._incommingMessage
+        };
     }
 
 }
