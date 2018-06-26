@@ -64,7 +64,9 @@ function botServiceQuickReplyPatch (bot, startAction = 'start') {
     }
 
     return async (req, res, postBack) => {
-        if (req.state._conversationId === req.data._conversationId) {
+        if (typeof req.data._conversationId === 'undefined'
+            || req.state._conversationId === req.data._conversationId) {
+
             return Router.CONTINUE;
         }
 
