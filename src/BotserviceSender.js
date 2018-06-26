@@ -302,6 +302,7 @@ class BotServiceSender extends ReturnSender {
         }
     }
 
+    // @ts-ignore
     async modifyStateBeforeStore () {
         return {
             _lastMessage: this._incommingMessage

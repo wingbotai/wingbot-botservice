@@ -33,7 +33,7 @@ function botServiceQuickReplyPatch (bot, startAction = 'start') {
 
     let cachedStartup;
 
-    async function loadStartupExpectedKeywords () {
+    async function loadStartupExpected () {
         const t = new Tester(bot);
 
         try {
@@ -41,17 +41,24 @@ function botServiceQuickReplyPatch (bot, startAction = 'start') {
 
             const { state } = t.getState();
 
-            return state._expectedKeywords || [];
+            return {
+                expected: state._expected || null,
+                keywords: state._expectedKeywords || []
+            };
+
         } catch (e) {
             console.warn('Failed to load expected keywords for startup'); // eslint-disable-line
-            return [];
+            return {
+                expected: null,
+                keywords: []
+            };
         }
 
     }
 
     async function getStartupExpectedKeywords () {
         if (!cachedStartup) {
-            cachedStartup = loadStartupExpectedKeywords();
+            cachedStartup = loadStartupExpected();
         }
         return cachedStartup;
     }
@@ -64,14 +71,17 @@ function botServiceQuickReplyPatch (bot, startAction = 'start') {
         res.setState({ _conversationId: req.data._conversationId });
 
         if (req.isText() && !req.isQuickReply()) {
-            const exKeywords = await getStartupExpectedKeywords();
+            const expect = await getStartupExpectedKeywords();
 
             const text = req.text();
 
-            const match = exKeywords.find(ex => ex.title === text);
+            const match = expect.keywords.find(ex => ex.title === text);
 
             if (match) {
                 postBack(match.action, match.data);
+                return Router.END;
+            } else if (expect.expected) {
+                postBack(expect.expected.action, expect.expected.data);
                 return Router.END;
             }
         }

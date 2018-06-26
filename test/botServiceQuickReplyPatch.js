@@ -38,4 +38,39 @@ describe('botServiceQuickReplyPatch()', () => {
 
     });
 
+    it('should accept "expected"', async () => {
+        const bot = new Router();
+
+        bot.use(botServiceQuickReplyPatch(bot, 'start'));
+
+        bot.use('start', (req, res) => {
+            res.text('Foo', {
+                other: 'bar'
+            });
+            res.expected('bar');
+        });
+
+        bot.use('bar', (req, res) => {
+            res.text('Bar');
+        });
+
+        bot.use('other', (req, res) => {
+            res.text('No');
+        });
+
+        bot.use((req, res) => {
+            res.text('No');
+        });
+
+        const t = new Tester(bot);
+
+        const req = Request.text(t.senderId, 'any');
+
+        Object.assign(req, { _conversationId: 'a' });
+
+        await t._request(req);
+
+        t.any().contains('Bar');
+    });
+
 });

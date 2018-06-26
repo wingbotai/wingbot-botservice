@@ -392,7 +392,7 @@ h4IS8ulAHI76Zhv3zxBXfBXyiqCzJego4NUNzHDrnpfs5KKM8/ExJwIDAQAB
 
         it('proceeds, on token signature', async () => {
             const jwtToken = jsonwebtoken
-                .sign({ appid: 'fo' }, PRIVATE, { keyid: emulKey, algorithm: 'RS256' });
+                .sign({ aud: 'fo' }, PRIVATE, { keyid: emulKey, algorithm: 'RS256' });
 
             await bs.verifyRequest({
                 channelId: 'emulator'
@@ -407,7 +407,7 @@ h4IS8ulAHI76Zhv3zxBXfBXyiqCzJego4NUNzHDrnpfs5KKM8/ExJwIDAQAB
             });
 
             const jwtFbToken = jsonwebtoken
-                .sign({ appid: 'fo' }, PRIVATE, { keyid: bsKey, algorithm: 'RS256' });
+                .sign({ aud: 'fo' }, PRIVATE, { keyid: bsKey, algorithm: 'RS256' });
 
             await bs.verifyRequest({
                 channelId: 'facebook'
@@ -446,7 +446,7 @@ h4IS8ulAHI76Zhv3zxBXfBXyiqCzJego4NUNzHDrnpfs5KKM8/ExJwIDAQAB
 
         it('fails with jwt token without key', async () => {
             const jwtFbToken = jsonwebtoken
-                .sign({ appid: 'fo' }, PRIVATE, { algorithm: 'RS256' });
+                .sign({ aud: 'fo' }, PRIVATE, { algorithm: 'RS256' });
 
             let err;
             try {
