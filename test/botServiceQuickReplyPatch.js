@@ -51,7 +51,7 @@ describe('botServiceQuickReplyPatch()', () => {
         });
 
         bot.use('bar', (req, res) => {
-            res.text('Bar');
+            res.text(req.text());
         });
 
         bot.use('other', (req, res) => {
@@ -70,7 +70,7 @@ describe('botServiceQuickReplyPatch()', () => {
 
         await t._request(req);
 
-        t.any().contains('Bar');
+        t.any().contains('any');
     });
 
 });

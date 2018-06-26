@@ -3,7 +3,7 @@
  */
 'use strict';
 
-const { Tester, Router } = require('wingbot');
+const { Tester, Router, Request } = require('wingbot');
 
 
 /**
@@ -81,7 +81,9 @@ function botServiceQuickReplyPatch (bot, startAction = 'start') {
                 postBack(match.action, match.data);
                 return Router.END;
             } else if (expect.expected) {
-                postBack(expect.expected.action, expect.expected.data);
+                const payload = JSON.stringify(expect.expected);
+                const action = Request.quickReplyText(req.senderId, req.text(), payload);
+                postBack(action);
                 return Router.END;
             }
         }
