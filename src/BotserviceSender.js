@@ -166,7 +166,7 @@ class BotServiceSender extends ReturnSender {
                 contentUrl: payload.url
             };
         } else {
-            let [, suffix] = `${payload.url}`.match(/\.([a-z0-9]+)$/i);
+            let [, suffix = null] = `${payload.url}`.match(/\.([a-z0-9]+)($|\?)/i) || [];
             if (!suffix) {
                 suffix = type === 'image' ? 'png' : 'mpeg';
             }
@@ -189,19 +189,13 @@ class BotServiceSender extends ReturnSender {
      * @returns {bs.SendMessage|null}
      */
     _transformPayload (payload) {
-        if (this._incommingMessage.channelId === 'facebook') {
-
-            return {
-                type: 'message',
-                channelData: payload
-            };
-        }
-
         if (payload.sender_action === 'typing_on') {
             return {
                 type: 'typing'
             };
-        } else if (payload.message) {
+        }
+
+        if (payload.message) {
             if (payload.message.attachment) {
 
                 switch (payload.message.attachment.type) {
@@ -246,7 +240,16 @@ class BotServiceSender extends ReturnSender {
 
     async _send (payload) {
         try {
-            const transformed = this._transformPayload(payload);
+            let transformed;
+
+            if (this._incommingMessage.channelId === 'facebook' && payload.message) {
+                transformed = {
+                    type: 'message',
+                    channelData: payload.message
+                };
+            } else {
+                transformed = this._transformPayload(payload);
+            }
 
             if (!transformed) {
                 return null;

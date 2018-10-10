@@ -61,7 +61,9 @@ function parseAttachments (body, req) {
 
     if (attachments.length === 0) {
         return res;
-    } else if (!res) {
+    }
+
+    if (!res) {
         res = Request.fileAttachment(body.from.id, 'foo');
     }
 

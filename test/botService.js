@@ -2,12 +2,12 @@
 
 const sinon = require('sinon');
 const { assert } = require('chai');
+const jsonwebtoken = require('jsonwebtoken');
 const {
     Tester, Router, Request, Processor, MemoryStateStorage
 } = require('wingbot');
 const BotService = require('../src/BotService');
 const BotServiceSender = require('../src/BotServiceSender');
-const jsonwebtoken = require('jsonwebtoken');
 
 const INPUT_MESSAGE = {
     botId: 1,
@@ -343,13 +343,7 @@ describe('<BotService>', function () {
         assert.deepEqual(
             sendFnMock.secondCall.args[0].body.channelData,
             {
-                message: {
-                    text: 'Hello World!'
-                },
-                messaging_type: 'RESPONSE',
-                recipient: {
-                    id: 'random-string'
-                }
+                text: 'Hello World!'
             }
         );
     });

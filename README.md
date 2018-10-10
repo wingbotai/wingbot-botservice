@@ -19,7 +19,7 @@ module.exports.bot = async (req, res) => {
 
     await bs.verifyRequest(body, headers);
 
-    await bs.processEvent(bodu);
+    await bs.processEvent(body);
 };
 
 ```
@@ -124,11 +124,15 @@ const { botServiceQuickReplyPatch } = require('wingbot-botservice');
 const bot = new Router();
 
 // attach as first
-bot.use(botServiceQuickReplyPatch(bot, 'start'));
+const patch = botServiceQuickReplyPatch(bot, 'start');
+bot.use(patch);
 
 bot.use('start', (req, res) => {
     res.text('Hello', {
         goto: 'Go to'
     });
 });
+
+// for invalidating cache use
+patch(true);
 ```

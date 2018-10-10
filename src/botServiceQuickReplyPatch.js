@@ -21,13 +21,17 @@ const { Tester, Router, Request } = require('wingbot');
  * const bot = new Router();
  *
  * // attach as first
- * bot.use(botServiceQuickReplyPatch(bot, 'start'));
+ * const patch = botServiceQuickReplyPatch(bot, 'start');
+ * bot.use(patch);
  *
  * bot.use('start', (req, res) => {
  *     res.text('Hello', {
  *         goto: 'Go to'
  *     });
  * });
+ *
+ * // for invalidating cache use
+ * patch(true);
  */
 function botServiceQuickReplyPatch (bot, startAction = 'start') {
 
@@ -64,6 +68,12 @@ function botServiceQuickReplyPatch (bot, startAction = 'start') {
     }
 
     return async (req, res, postBack) => {
+        if (req === true) {
+            // just invalidate the cache
+            cachedStartup = null;
+            return Router.CONTINUE;
+        }
+
         if (typeof req.data._conversationId === 'undefined'
             || req.state._conversationId === req.data._conversationId) {
 
@@ -82,7 +92,9 @@ function botServiceQuickReplyPatch (bot, startAction = 'start') {
             if (match) {
                 postBack(match.action, match.data);
                 return Router.END;
-            } else if (expect.expected) {
+            }
+
+            if (expect.expected) {
                 const payload = JSON.stringify(expect.expected);
                 const action = Request.quickReplyText(req.senderId, req.text(), payload);
                 postBack(action);
