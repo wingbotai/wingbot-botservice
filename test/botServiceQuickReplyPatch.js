@@ -4,7 +4,6 @@
 'use strict';
 
 const { Router, Tester, Request } = require('wingbot');
-const assert = require('assert');
 const botServiceQuickReplyPatch = require('../src/botServiceQuickReplyPatch');
 
 describe('botServiceQuickReplyPatch()', () => {
@@ -17,13 +16,10 @@ describe('botServiceQuickReplyPatch()', () => {
 
         bot.use(patch);
 
-        let callcount = 0;
-
         bot.use('start', (req, res) => {
             res.text('Foo', {
                 bar: 'bar'
             });
-            callcount++;
         });
 
         bot.use('bar', (req, res) => {
@@ -42,26 +38,6 @@ describe('botServiceQuickReplyPatch()', () => {
         ));
 
         t.any().contains('Bar');
-
-        assert.equal(callcount, 1);
-
-        t.senderId = '1';
-        await t._request(Object.assign(
-            Request.text(t.senderId, 'bar'),
-            { _conversationId: 'a' }
-        ));
-
-        assert.equal(callcount, 1);
-
-        patch(true);
-
-        t.senderId = '2';
-        await t._request(Object.assign(
-            Request.text(t.senderId, 'bar'),
-            { _conversationId: 'a' }
-        ));
-
-        assert.equal(callcount, 2);
 
     });
 

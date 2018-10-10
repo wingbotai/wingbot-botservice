@@ -29,13 +29,14 @@ const { Tester, Router, Request } = require('wingbot');
  *         goto: 'Go to'
  *     });
  * });
- *
- * // for invalidating cache use
- * patch(true);
  */
 function botServiceQuickReplyPatch (bot, startAction = 'start') {
 
-    let cachedStartup;
+    let cachedStartup = null;
+
+    bot.on('rebuild', () => {
+        cachedStartup = null;
+    });
 
     async function loadStartupExpected () {
         const t = new Tester(bot);
@@ -61,18 +62,13 @@ function botServiceQuickReplyPatch (bot, startAction = 'start') {
     }
 
     async function getStartupExpectedKeywords () {
-        if (!cachedStartup) {
+        if (cachedStartup === null) {
             cachedStartup = loadStartupExpected();
         }
         return cachedStartup;
     }
 
     return async (req, res, postBack) => {
-        if (req === true) {
-            // just invalidate the cache
-            cachedStartup = null;
-            return Router.CONTINUE;
-        }
 
         if (typeof req.data._conversationId === 'undefined'
             || req.state._conversationId === req.data._conversationId) {
