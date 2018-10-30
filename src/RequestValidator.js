@@ -69,7 +69,9 @@ class RequestValidator {
         }
 
         if (channelId !== 'emulator'
-            && !(key.endorsements || []).includes(channelId)) {
+            && key.endorsements
+            && key.endorsements.length !== 0
+            && !key.endorsements.includes(channelId)) {
 
             return null;
         }
