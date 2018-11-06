@@ -31,6 +31,7 @@ class BotService {
      * @param {string} [options.grantType] - boservice authentication grant_type
      * @param {string} [options.scope] - boservice authentication scope
      * @param {string} [options.uri] - boservice authentication uri
+     * @param {string|null} [options.welcomeAction='start'] - conversation start emits postback
      * @param {Function} [options.requestLib] - request library replacement for testing
      * @param {string} [options.overPublic] - override public key for testing
      * @param {console} [senderLogger] - optional console like chat logger
@@ -170,6 +171,7 @@ class BotService {
             req = parseAttachments(body, req);
 
         } else if (body.type === 'conversationUpdate'
+            && this._options.welcomeAction
             && body.membersAdded
             && body.membersAdded[0].id === body.recipient.id) {
 
@@ -177,6 +179,21 @@ class BotService {
                 senderId,
                 this._options.welcomeAction,
                 {},
+                null,
+                {},
+                timestamp
+            );
+        } else if (body.type === 'event'
+            && body.name === 'postBack'
+            && body.value
+            && body.value.action) {
+
+            const { action, data = {} } = body.value;
+
+            req = Request.postBack(
+                senderId,
+                action,
+                data,
                 null,
                 {},
                 timestamp

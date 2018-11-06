@@ -21,7 +21,18 @@ module.exports.bot = async (req, res) => {
 
     await bs.processEvent(body);
 };
+```
 
+## Using backchannel for sending postBacks to the bot
+
+```javascript
+const directLine = new DirectLine();
+directLine.postActivity({
+    type:'event',
+    name:'postBack',
+    from:{ id: botserviceUserId },
+    value:{ action: 'action-path', data: {/* optional */} }
+});
 ```
 -----------------
 
@@ -60,18 +71,19 @@ BotService connector for wingbot.ai
 
 ### new BotService(processor, options, [senderLogger])
 
-| Param | Type | Description |
-| --- | --- | --- |
-| processor | <code>Processor</code> | wingbot Processor instance |
-| options | <code>Object</code> |  |
-| options.appId | <code>string</code> | botservice client id |
-| options.appSecret | <code>string</code> | botservice client secret |
-| [options.grantType] | <code>string</code> | boservice authentication grant_type |
-| [options.scope] | <code>string</code> | boservice authentication scope |
-| [options.uri] | <code>string</code> | boservice authentication uri |
-| [options.requestLib] | <code>function</code> | request library replacement for testing |
-| [options.overPublic] | <code>string</code> | override public key for testing |
-| [senderLogger] | <code>console</code> | optional console like chat logger |
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| processor | <code>Processor</code> |  | wingbot Processor instance |
+| options | <code>Object</code> |  |  |
+| options.appId | <code>string</code> |  | botservice client id |
+| options.appSecret | <code>string</code> |  | botservice client secret |
+| [options.grantType] | <code>string</code> |  | boservice authentication grant_type |
+| [options.scope] | <code>string</code> |  | boservice authentication scope |
+| [options.uri] | <code>string</code> |  | boservice authentication uri |
+| [options.welcomeAction] | <code>string</code> \| <code>null</code> | <code>&quot;&#x27;start&#x27;&quot;</code> | conversation start emits postback |
+| [options.requestLib] | <code>function</code> |  | request library replacement for testing |
+| [options.overPublic] | <code>string</code> |  | override public key for testing |
+| [senderLogger] | <code>console</code> |  | optional console like chat logger |
 
 <a name="BotService+processEvent"></a>
 
@@ -132,7 +144,4 @@ bot.use('start', (req, res) => {
         goto: 'Go to'
     });
 });
-
-// for invalidating cache use
-patch(true);
 ```
