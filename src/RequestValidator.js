@@ -96,7 +96,7 @@ class RequestValidator {
     /**
      * Verify Facebook webhook event
      *
-     * @param {Object} body
+     * @param {string} body
      * @param {Object} headers
      * @throws {Error} when request is not authorized
      */
@@ -114,9 +114,20 @@ class RequestValidator {
             throw this._getUnauthorizedError('Invalid token');
         }
 
+        // @ts-ignore
         const { kid = null } = decoded.header || {};
 
-        const key = await this._getKey(kid, body.channelId);
+        let channelIdentifier;
+        // @deprecated
+        if (typeof body === 'object') {
+            // @ts-ignore
+            channelIdentifier = body.channelId;
+        } else {
+            const parsed = JSON.parse(`${body}`);
+            channelIdentifier = parsed.channelId;
+        }
+
+        const key = await this._getKey(kid, channelIdentifier);
 
         if (!key) {
             throw this._getUnauthorizedError('Unable to find right key');
