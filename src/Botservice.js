@@ -16,6 +16,11 @@ const EMULATOR = 'https://login.microsoftonline.com/botframework.com/v2.0/.well-
 const ABS_TOKEN_EXPIRATION_WINDOW = 120000; // two minutes
 
 /**
+ * @typedef {Object} Processor
+ * @param {Function} processMessage
+ */
+
+/**
  * BotService connector for wingbot.ai
  *
  * @class
@@ -42,7 +47,8 @@ class BotService {
             grantType: 'client_credentials',
             scope: 'https://api.botframework.com/.default',
             uri: 'https://login.microsoftonline.com/botframework.com/oauth2/v2.0/token',
-            welcomeAction: 'start'
+            welcomeAction: 'start',
+            appSecret: null
         };
 
         Object.assign(this._options, options);
@@ -137,6 +143,7 @@ class BotService {
             Object.assign(opts, { absToken });
         }
 
+        // @ts-ignore
         return new BotServiceSender(opts, body.from.id, body, this._senderLogger, this._request);
     }
 
@@ -232,17 +239,23 @@ class BotService {
     /**
      * Verify Facebook webhook event
      *
-     * @param {Object} body - parsed request body
+     * @param {string|Buffer} body - parsed request body
      * @param {Object} headers - request headers
      * @returns {Promise}
      * @throws {Error} when authorization token is invalid or missing
      */
     async verifyRequest (body, headers) {
-        const verifier = this._getRequestValidator(body.channelId === 'emulator'
+        let useBody = body;
+        if (useBody instanceof Buffer) {
+            useBody = useBody.toString('utf8');
+        }
+        useBody = JSON.parse(useBody);
+
+        const verifier = this._getRequestValidator(useBody.channelId === 'emulator'
             ? EMULATOR
             : BOTSERVICE);
 
-        await verifier.verifyRequest(body, headers);
+        await verifier.verifyRequest(useBody, headers);
     }
 
 }
