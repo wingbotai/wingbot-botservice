@@ -10,7 +10,7 @@ const KNOWN_TYPES = ['image', 'audio', 'video'];
 /**
  *
  * @param {bs.Activity} body
- * @param {Object|null} req
+ * @param {object|null} req
  */
 function parseAttachments (body, req) {
     if (!body.attachments && !body.entities) {

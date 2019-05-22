@@ -30,7 +30,7 @@ class BotService {
     /**
      *
      * @param {Processor} processor - wingbot Processor instance
-     * @param {Object} options
+     * @param {object} options
      * @param {string} options.appId - botservice client id
      * @param {string} options.appSecret - botservice client secret
      * @param {string} [options.grantType] - boservice authentication grant_type
@@ -151,7 +151,7 @@ class BotService {
      * Process Facebook request
      *
      * @param {bs.Activity} body - event body
-     * @returns {Promise<Array<{message:Object,pageId:string}>>} - unprocessed events
+     * @returns {Promise<Array<{message:object,pageId:string}>>} - unprocessed events
      */
     async processEvent (body) {
         if (!body.from) {
@@ -240,7 +240,7 @@ class BotService {
      * Verify Facebook webhook event
      *
      * @param {string|Buffer} body - parsed request body
-     * @param {Object} headers - request headers
+     * @param {object} headers - request headers
      * @returns {Promise}
      * @throws {Error} when authorization token is invalid or missing
      */
@@ -249,7 +249,9 @@ class BotService {
         if (useBody instanceof Buffer) {
             useBody = useBody.toString('utf8');
         }
-        useBody = JSON.parse(useBody);
+        if (typeof useBody === 'string') {
+            useBody = JSON.parse(useBody);
+        }
 
         const verifier = this._getRequestValidator(useBody.channelId === 'emulator'
             ? EMULATOR

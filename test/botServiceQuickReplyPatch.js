@@ -32,7 +32,7 @@ describe('botServiceQuickReplyPatch()', () => {
 
         const t = new Tester(bot);
 
-        await t._request(Object.assign(
+        await t.processMessage(Object.assign(
             Request.text(t.senderId, 'bar'),
             { _conversationId: 'a' }
         ));
@@ -71,7 +71,7 @@ describe('botServiceQuickReplyPatch()', () => {
 
         Object.assign(req, { _conversationId: 'a' });
 
-        await t._request(req);
+        await t.processMessage(req);
 
         t.any().contains('any');
     });

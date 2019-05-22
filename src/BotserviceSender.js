@@ -10,14 +10,14 @@ class BotServiceSender extends ReturnSender {
 
     /**
      *
-     * @param {Object} options
+     * @param {object} options
      * @param {string} [options.absToken]
      * @param {string} userId
-     * @param {Object} incommingMessage
+     * @param {object} incommingMessage
      * @param {string} incommingMessage.serviceUrl
-     * @param {Object} incommingMessage.from
-     * @param {Object} incommingMessage.recipient
-     * @param {Object} incommingMessage.conversation
+     * @param {object} incommingMessage.from
+     * @param {object} incommingMessage.recipient
+     * @param {object} incommingMessage.conversation
      * @param {string} incommingMessage.locale
      * @param {string} incommingMessage.channelId
      * @param {string} [incommingMessage.id]
@@ -102,7 +102,7 @@ class BotServiceSender extends ReturnSender {
 
     /**
      *
-     * @param {Object} tplPayload
+     * @param {object} tplPayload
      * @returns {bs.SendMessage|null}
      */
     _transformTemplate (tplPayload) {
@@ -185,13 +185,30 @@ class BotServiceSender extends ReturnSender {
 
     /**
      *
-     * @param {Object} payload
+     * @param {object} payload
      * @returns {bs.SendMessage|null}
      */
     _transformPayload (payload) {
         if (payload.sender_action === 'typing_on') {
             return {
                 type: 'typing'
+            };
+        }
+
+        if (payload.target_app_id) {
+            // handover
+            const {
+                metadata = {},
+                target_app_id: targetAppId
+            } = payload;
+
+            return {
+                type: 'event',
+                name: 'passThread',
+                value: {
+                    targetAppId,
+                    metadata
+                }
             };
         }
 

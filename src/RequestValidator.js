@@ -14,7 +14,7 @@ class RequestValidator {
     /**
      *
      * @param {string} openIdUrl
-     * @param {Object} options
+     * @param {object} options
      * @param {string} options.appId - botservice client id
      * @param {Function} [options.requestLib] - request library replacement
      * @param {string} [options.overPublic] - override public key
@@ -96,8 +96,8 @@ class RequestValidator {
     /**
      * Verify Facebook webhook event
      *
-     * @param {Object} body
-     * @param {Object} headers
+     * @param {object} body
+     * @param {object} headers
      * @throws {Error} when request is not authorized
      */
     async verifyRequest (body, headers) {
