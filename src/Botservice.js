@@ -16,7 +16,7 @@ const EMULATOR = 'https://login.microsoftonline.com/botframework.com/v2.0/.well-
 const ABS_TOKEN_EXPIRATION_WINDOW = 120000; // two minutes
 
 /**
- * @typedef {Object} Processor
+ * @typedef {object} Processor
  * @param {Function} processMessage
  */
 
@@ -123,7 +123,6 @@ class BotService {
             type: 'message'
         };
 
-
         // simulate incomming event
         const messageSender = await this._createSender(botsetviceEvent);
 
@@ -219,7 +218,6 @@ class BotService {
 
         return this.processor.processMessage(req, pageId, messageSender);
     }
-
 
     /**
      *

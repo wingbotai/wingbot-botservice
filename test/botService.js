@@ -63,12 +63,13 @@ describe('<BotService>', function () {
             requestLib: sendFnMock
         });
 
-        const textMessage = Object.assign({}, INPUT_MESSAGE, {
+        const textMessage = {
+            ...INPUT_MESSAGE,
             type: 'conversationUpdate',
             membersAdded: [
                 { id: INPUT_MESSAGE.recipient.id }
             ]
-        });
+        };
 
         await botService.processEvent(textMessage);
 
@@ -109,9 +110,7 @@ describe('<BotService>', function () {
             requestLib: sendFnMock
         });
 
-        const textMessage = Object.assign({}, INPUT_MESSAGE, {
-            text: 'hello'
-        });
+        const textMessage = { ...INPUT_MESSAGE, text: 'hello' };
 
         await botService.processEvent(textMessage);
 
@@ -147,7 +146,8 @@ describe('<BotService>', function () {
             requestLib: sendFnMock
         });
 
-        const textMessage = Object.assign({}, INPUT_MESSAGE, {
+        const textMessage = {
+            ...INPUT_MESSAGE,
             text: 'hello',
             attachments: [
                 { contentType: 'image/png', contentUrl: 'http' },
@@ -157,7 +157,7 @@ describe('<BotService>', function () {
             entities: [
                 { type: 'Place', geo: { latitude: 1, longitude: 2 } }
             ]
-        });
+        };
 
         await botService.processEvent(textMessage);
 
@@ -192,10 +192,11 @@ describe('<BotService>', function () {
             requestLib: sendFnMock
         });
 
-        const textMessage = Object.assign({}, INPUT_MESSAGE, {
+        const textMessage = {
+            ...INPUT_MESSAGE,
             text: 'hello',
             channelId: 'emulator'
-        });
+        };
 
         await botService.processEvent(textMessage);
 
@@ -251,9 +252,7 @@ describe('<BotService>', function () {
             requestLib: sendFnMock
         });
 
-        const textMessage = Object.assign({}, INPUT_MESSAGE, {
-            value: { payload: 'go' }
-        });
+        const textMessage = { ...INPUT_MESSAGE, value: { payload: 'go' } };
 
         await botService.processEvent(textMessage);
 
@@ -331,12 +330,13 @@ describe('<BotService>', function () {
             requestLib: sendFnMock
         });
 
-        const textMessage = Object.assign({}, INPUT_MESSAGE, {
+        const textMessage = {
+            ...INPUT_MESSAGE,
             channelId: 'facebook',
             attachments: [
                 { contentType: 'image/png', contentUrl: 'http' }
             ]
-        });
+        };
 
         await botService.processEvent(textMessage);
 
@@ -380,7 +380,7 @@ h4IS8ulAHI76Zhv3zxBXfBXyiqCzJego4NUNzHDrnpfs5KKM8/ExJwIDAQAB
 
             // lets get botservice key
             const keys = await bs._getRequestValidator(BotService.BOTSERVICE)._getPublicKeys();
-            bsKey = keys.find(k => (k.endorsements || []).includes('facebook')).kid;
+            bsKey = keys.find((k) => (k.endorsements || []).includes('facebook')).kid;
 
         });
 
@@ -481,7 +481,7 @@ h4IS8ulAHI76Zhv3zxBXfBXyiqCzJego4NUNzHDrnpfs5KKM8/ExJwIDAQAB
             const messageSender = new BotServiceSender(
                 {},
                 SENDER_ID,
-                Object.assign({}, INPUT_MESSAGE, { channelId: 'emulator' }),
+                ({ ...INPUT_MESSAGE, channelId: 'emulator' }),
                 console,
                 sendFnMock
             );
@@ -494,12 +494,11 @@ h4IS8ulAHI76Zhv3zxBXfBXyiqCzJego4NUNzHDrnpfs5KKM8/ExJwIDAQAB
             const r = await botService.processMessage(message, SENDER_ID, PAGE_ID);
 
             assert.strictEqual(r.status, 200);
-            assert.strictEqual(r.responses.length, 1);
-            assert.strictEqual(r.responses[0].text, 'Hello');
+            assert.strictEqual(r.results.length, 1);
+            assert.strictEqual(r.results[0].text, 'Hello');
 
             assert.strictEqual(sendFnMock.callCount, 2);
             assert.strictEqual(sendFnMock.secondCall.args[0].body.text, 'Hello');
-
 
         });
 

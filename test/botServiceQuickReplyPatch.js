@@ -76,4 +76,65 @@ describe('botServiceQuickReplyPatch()', () => {
         t.any().contains('any');
     });
 
+    describe('works with setState', () => {
+
+        /** @type {Tester} */
+        let t;
+
+        beforeEach(() => {
+            const bot = new Router();
+
+            bot.use(botServiceQuickReplyPatch(bot));
+
+            /**
+             * _$textInput) {
+                    set = req.text();
+                } else if (val._$entity
+             */
+
+            bot.use('start', (req, res) => {
+                res.text('Foo', [
+                    {
+                        title: 'Hello',
+                        action: 'next',
+                        setState: {
+                            gotText: { _$textInput: true },
+                            gotEntity: { _$entity: '@entity' }
+                        },
+                        match: ['@entity']
+                    }
+                ]);
+            });
+
+            bot.use('next', (req, res) => {
+                res.text(`T ${req.state.gotText} E ${req.state.gotEntity} N ${req.state['@entity']}`);
+            });
+
+            bot.use((req, res) => {
+                res.text('No');
+            });
+
+            t = new Tester(bot);
+        });
+
+        it('should work with setState', async () => {
+            const req = Request.text(t.senderId, 'hello');
+            Object.assign(req, { _conversationId: 'a' });
+
+            await t.processMessage(req);
+
+            t.any().contains('T hello E null N undefined');
+        });
+
+        it('should work with entities', async () => {
+            const req = Request.intentWithEntity(t.senderId, 'sasalele', 'int', 'entity', 'content');
+            Object.assign(req, { _conversationId: 'a' });
+
+            await t.processMessage(req);
+
+            t.any().contains('T sasalele E content N content');
+        });
+
+    });
+
 });

@@ -3,8 +3,9 @@
  */
 'use strict';
 
-const { Tester, Router, Request } = require('wingbot');
-
+const {
+    Tester, Router, Request, quickReplyAction, ai, getSetState
+} = require('wingbot');
 
 /**
  * Patch, which solves problem with BotFramework. Always, when conversationId is changed,
@@ -70,35 +71,55 @@ function botServiceQuickReplyPatch (bot, startAction = 'start') {
 
     return async (req, res, postBack) => {
 
-        if (typeof req.data._conversationId === 'undefined'
-            || req.state._conversationId === req.data._conversationId) {
+        if (typeof req.event._conversationId === 'undefined'
+            || req.state._conversationId === req.event._conversationId) {
 
-            return Router.CONTINUE;
+            return Router.BREAK;
         }
 
-        res.setState({ _conversationId: req.data._conversationId });
+        res.setState({ _conversationId: req.event._conversationId });
 
         if (req.isText() && !req.isQuickReply()) {
             const expect = await getStartupExpectedKeywords();
 
-            const text = req.text();
-
-            const match = expect.keywords.find(ex => ex.title === text);
+            const match = quickReplyAction(expect.keywords, req, ai);
 
             if (match) {
-                postBack(match.action, match.data);
+                const {
+                    _aiKeys: aiKeys = [], setState, action, data
+                } = match;
+
+                if (setState) {
+                    const aiSetState = {};
+                    const otherSetState = {};
+                    const ss = getSetState(setState, req, res);
+                    Object.keys(setState)
+                        .forEach((k) => {
+                            if (aiKeys.includes(k)) {
+                                Object.assign(aiSetState, { [k]: ss[k] });
+                            } else {
+                                Object.assign(otherSetState, { [k]: ss[k] });
+                            }
+                        });
+
+                    ai.processSetStateEntities(req, otherSetState);
+                    Object.assign(req.state, otherSetState, aiSetState);
+                    res.setState({ ...otherSetState, ...aiSetState });
+                }
+                postBack(action, data);
                 return Router.END;
             }
 
             if (expect.expected) {
-                const payload = JSON.stringify(expect.expected);
-                const action = Request.quickReplyText(req.senderId, req.text(), payload);
-                postBack(action);
+                const { action, data } = expect.expected;
+                res.expected(action, data);
+                const request = Request.text(req.senderId, req.text());
+                postBack(request);
                 return Router.END;
             }
         }
 
-        return Router.CONTINUE;
+        return Router.BREAK;
     };
 }
 

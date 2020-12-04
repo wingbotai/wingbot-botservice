@@ -59,8 +59,8 @@ class BotServiceSender extends ReturnSender {
 
     _makeButtons (buttons) {
         return buttons
-            .map(btn => this._makeButton(btn))
-            .filter(btn => btn !== null);
+            .map((btn) => this._makeButton(btn))
+            .filter((btn) => btn !== null);
     }
 
     _makeHeroCard (title, subtitle, text, imageUrl, defaultAction, buttons) {
@@ -122,7 +122,7 @@ class BotServiceSender extends ReturnSender {
 
                 Object.assign(ret, {
                     attachments: tplPayload.elements
-                        .map(at => this._makeHeroCard(
+                        .map((at) => this._makeHeroCard(
                             at.title,
                             at.subtitle,
                             null,
@@ -238,7 +238,7 @@ class BotServiceSender extends ReturnSender {
 
             if (payload.message.quick_replies) {
                 const actions = payload.message.quick_replies
-                    .map(qr => ({
+                    .map((qr) => ({
                         type: 'imBack',
                         title: qr.title,
                         value: qr.title
@@ -256,10 +256,17 @@ class BotServiceSender extends ReturnSender {
     }
 
     async _send (payload) {
-        try {
+        try { // eslint-disable-line no-useless-catch
             let transformed;
 
-            if (this._incommingMessage.channelId === 'facebook' && payload.message) {
+            if (payload.postback && payload.postback.payload) {
+                transformed = {
+                    type: 'message',
+                    channelData: typeof payload.postback.payload === 'string'
+                        ? JSON.parse(payload.postback.payload)
+                        : payload.postback.payload
+                };
+            } else if (this._incommingMessage.channelId === 'facebook' && payload.message) {
                 transformed = {
                     type: 'message',
                     channelData: payload.message

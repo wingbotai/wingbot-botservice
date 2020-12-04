@@ -62,7 +62,7 @@ class RequestValidator {
     async _getKey (kid, channelId) {
         const keys = await this._getPublicKeys();
 
-        const key = keys.find(k => k.kid === kid);
+        const key = keys.find((k) => k.kid === kid);
 
         if (!key || !key.n || !key.e) {
             return null;

@@ -40,11 +40,11 @@ function parseAttachments (body, req) {
                 }
             };
         })
-        .filter(at => at !== null);
+        .filter((at) => at !== null);
 
     const locations = (body.entities || [])
-        .filter(ent => ent.type === 'Place')
-        .map(ent => ({
+        .filter((ent) => ent.type === 'Place')
+        .map((ent) => ({
             type: 'location',
             payload: {
                 coordinates: {
