@@ -29,6 +29,28 @@ const INPUT_MESSAGE = {
     }
 };
 
+const TEAMS_EVENT = {
+    sender: { id: 'random-string' },
+    message: { text: 'Hello world' },
+    meta: {
+        channelId: 'msteams',
+        type: 'message',
+        id: 'BxxupSfdLSxFBLNpnEo1Pz|0000000',
+        from: {
+            id: 'random-string',
+            name: 'You',
+            botId: 'random-bot-id',
+            stage: 'staging'
+        },
+        conversation: { id: 'BxxupSfdLSxFBLNpnEo1Pz' },
+        recipient: { id: 'cs-testbot@Hkh8NttIV6E', name: 'cs-testbot' },
+        replyToId: undefined,
+        locale: 'en-GB',
+        serviceUrl: '/direct-line-api-url/',
+        absToken: '6avLaA'
+    }
+};
+
 function createLogger () {
     return {
         error: sinon.spy(),
@@ -99,6 +121,64 @@ describe('<BotServiceSender>', () => {
                     targetAppId: '2',
                     metadata: {}
                 }
+            },
+            json: true
+        });
+        assert(logger.log.called, 'should be called before promise is resolved');
+    });
+
+    it('translates quick replies to button template at MS teams', async () => {
+        const logger = createLogger();
+        const req = sinon.spy(() => Promise.resolve({}));
+        const sender = new BotServiceSender({}, 'user-id', TEAMS_EVENT.meta, logger, req);
+
+        sender.send({ recipient: { id: '1' }, message: { text: 'hello', quick_replies: [{ title: 'Foo', payload: 'bar' }] } });
+
+        const promise = sender.finished();
+
+        assert(promise instanceof Promise);
+
+        await promise;
+
+        assert.deepEqual(req.firstCall.args[0], {
+            uri: '/direct-line-api-url/v3/conversations/BxxupSfdLSxFBLNpnEo1Pz/activities/BxxupSfdLSxFBLNpnEo1Pz|0000000',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            method: 'POST',
+            body: {
+                attachments: [
+                    {
+                        content: {
+                            buttons: [
+                                {
+                                    title: 'Foo',
+                                    type: 'postBack',
+                                    value: {
+                                        payload: 'bar'
+                                    }
+                                }
+                            ],
+                            text: 'hello'
+                        },
+                        contentType: 'application/vnd.microsoft.card.hero'
+                    }
+                ],
+                type: 'message',
+                conversation: {
+                    id: 'BxxupSfdLSxFBLNpnEo1Pz'
+                },
+                from: {
+                    id: 'cs-testbot@Hkh8NttIV6E',
+                    name: 'cs-testbot'
+                },
+                recipient: {
+                    botId: 'random-bot-id',
+                    id: 'random-string',
+                    name: 'You',
+                    stage: 'staging'
+                },
+                replyToId: 'BxxupSfdLSxFBLNpnEo1Pz|0000000'
             },
             json: true
         });

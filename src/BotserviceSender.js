@@ -231,12 +231,35 @@ class BotServiceSender extends ReturnSender {
                 return null;
             }
 
-            const ret = {
+            let ret = {
                 type: 'message',
                 text: `${payload.message.text}`
             };
 
-            if (payload.message.quick_replies) {
+            if (this._incommingMessage.channelId === 'msteams' && payload.message.quick_replies) {
+                // @ts-ignore
+                ret = {
+                    type: 'message'
+                };
+
+                Object.assign(ret, {
+                    attachments: [
+                        this._makeHeroCard(
+                            null,
+                            null,
+                            payload.message.text,
+                            null,
+                            null,
+                            payload.message.quick_replies
+                                .map((qr) => ({
+                                    type: 'postback',
+                                    title: qr.title,
+                                    payload: qr.payload
+                                }))
+                        )
+                    ]
+                });
+            } else if (payload.message.quick_replies) {
                 const actions = payload.message.quick_replies
                     .map((qr) => ({
                         type: 'imBack',
