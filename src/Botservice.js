@@ -211,7 +211,8 @@ class BotService {
         }
 
         Object.assign(req, {
-            _conversationId: body.conversation.id
+            _conversationId: body.conversation.id,
+            original_event: body
         });
 
         const messageSender = await this._createSender(body);

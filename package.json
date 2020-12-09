@@ -1,6 +1,6 @@
 {
   "name": "wingbot-botservice",
-  "version": "3.8.0",
+  "version": "3.8.2",
   "description": "Microsoft BotService connector for wingbot.ai",
   "main": "src/main.js",
   "scripts": {
