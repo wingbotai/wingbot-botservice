@@ -124,7 +124,16 @@ class BotService {
         };
 
         // simulate incomming event
-        const messageSender = await this._createSender(botsetviceEvent);
+        let absToken = null;
+        if (botsetviceEvent.channelId !== 'emulator') {
+            absToken = await this._getToken();
+        }
+        const messageSender = await this._createSender(botsetviceEvent, absToken);
+
+        Object.assign(message, {
+            _conversationId: conversation.id,
+            original_event: botsetviceEvent
+        });
 
         return this.processor.processMessage(message, pageId, messageSender);
     }
@@ -133,12 +142,12 @@ class BotService {
      *
      * @private
      * @param {bs.Activity} body - event body
+     * @param {string} absToken - token
      */
-    async _createSender (body) {
+    async _createSender (body, absToken = null) {
         const opts = {};
 
-        if (body.channelId !== 'emulator') {
-            const absToken = await this._getToken();
+        if (absToken) {
             Object.assign(opts, { absToken });
         }
 
@@ -178,8 +187,10 @@ class BotService {
 
         } else if (body.type === 'conversationUpdate'
             && this._options.welcomeAction
-            && body.membersAdded
-            && body.membersAdded[0].id === body.recipient.id) {
+            && ((body.channelId !== 'msteams'
+                && body.membersAdded && body.membersAdded[0].id === body.recipient.id)
+                || (body.channelId === 'msteams'
+                    && body.membersAdded && body.membersAdded[0].id === body.from.id))) {
 
             req = Request.postBack(
                 senderId,
@@ -215,9 +226,14 @@ class BotService {
             original_event: body
         });
 
-        const messageSender = await this._createSender(body);
+        let absToken = null;
+        if (body.channelId !== 'emulator') {
+            absToken = await this._getToken();
+        }
 
-        return this.processor.processMessage(req, pageId, messageSender);
+        const messageSender = await this._createSender(body, absToken);
+
+        return this.processor.processMessage(req, pageId, messageSender, { absToken });
     }
 
     /**
