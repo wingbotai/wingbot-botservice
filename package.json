@@ -1,6 +1,6 @@
 {
   "name": "wingbot-botservice",
-  "version": "3.9.0-alpha.1",
+  "version": "3.9.0-alpha.5",
   "description": "Microsoft BotService connector for wingbot.ai",
   "main": "src/main.js",
   "scripts": {
@@ -8,7 +8,7 @@
     "test:unit": "mocha ./test/**/*.test.js",
     "test:unit:watch": "npm run test:unit -- --watch",
     "test:coverage": "nyc --reporter=html mocha ./test && nyc report",
-    "test:coverage:threshold": "nyc check-coverage --lines 80 --functions 80 --branches 70",
+    "test:coverage:threshold": "nyc check-coverage --lines 75 --functions 80 --branches 60",
     "test:lint": "eslint ./src/**/*.js ./bin/**/*.js ./test/**/*.js ",
     "doc": "node ./bin/makeApiDoc.js"
   },

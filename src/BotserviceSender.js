@@ -100,6 +100,200 @@ class BotServiceSender extends ReturnSender {
         return ret;
     }
 
+    _adaptiveCardAction (fbButton) {
+        if (!fbButton) {
+            return null;
+        }
+        let ret;
+        switch (fbButton.type) {
+            case 'web_url':
+                ret = {
+                    type: 'Action.OpenUrl',
+                    url: fbButton.url
+                };
+                break;
+            case 'postback':
+                ret = {
+                    type: 'Action.Submit',
+                    data: {
+                        payload: fbButton.payload,
+                        msteams: {
+                            type: 'messageBack',
+                            displayText: fbButton.title,
+                            text: fbButton.title,
+                            value: { payload: fbButton.payload }
+                        }
+                    }
+                };
+                break;
+            default:
+                return null;
+        }
+        if (fbButton.title) Object.assign(ret, { title: fbButton.title });
+        return ret;
+    }
+
+    _makeAdaptiveCard (horizontal, title, subtitle, imageUrl, defaultAction, buttons) {
+        const actions = buttons
+            ? buttons
+                .map((b) => this._adaptiveCardAction(b))
+                .filter((b) => !!b)
+            : [];
+
+        const image = imageUrl
+            ? {
+                type: 'Image',
+                width: 'auto',
+                url: imageUrl
+            }
+            : null;
+
+        const content = {
+            type: 'AdaptiveCard',
+            version: 1.0,
+            body: []
+        };
+
+        if (horizontal) {
+            const bodyContent = {
+                type: 'ColumnSet',
+                columns: []
+            };
+
+            if (image) {
+                bodyContent.columns.push({
+                    type: 'Column',
+                    width: 1,
+                    spacing: 'none',
+                    items: [
+                        image
+                    ]
+                });
+            }
+
+            const contentColumn = {
+                type: 'Column',
+                width: 2,
+                spacing: 'medium',
+                items: [
+                    {
+                        type: 'TextBlock',
+                        text: title,
+                        weight: 'bolder',
+                        size: 'medium'
+                    }
+                ]
+            };
+
+            if (subtitle) {
+                // @ts-ignore
+                contentColumn.items.push({
+                    type: 'TextBlock',
+                    text: subtitle,
+                    spacing: 'small'
+                });
+            }
+
+            if (actions.length) {
+                // @ts-ignore
+                contentColumn.items.push({
+                    type: 'ActionSet',
+                    spacing: 'padding',
+                    actions
+                });
+            }
+            bodyContent.columns.push(contentColumn);
+            content.body.push(bodyContent);
+        } else {
+            const bodyContent = {
+                type: 'ColumnSet',
+                columns: [
+                    {
+                        type: 'Column',
+                        width: 3,
+                        spacing: 'none',
+                        items: [
+                            ...(image ? [image] : []),
+                            {
+                                type: 'TextBlock',
+                                text: '42 miles away',
+                                weight: 'bolder'
+                            },
+                            ...(subtitle ? [{
+                                type: 'TextBlock',
+                                text: 'Gig Harbor, WA 98335',
+                                spacing: 'none',
+                                wrap: true
+                            }] : [])
+                        ]
+                    }
+                ]
+            };
+
+            content.body.push(bodyContent);
+
+            if (actions.length) {
+                Object.assign(content, { actions });
+            }
+        }
+
+        const selectAction = this._adaptiveCardAction(defaultAction);
+
+        if (defaultAction) {
+            Object.assign(content, { selectAction });
+        }
+
+        return {
+            contentType: 'application/vnd.microsoft.card.adaptive',
+            content
+        };
+    }
+
+    _doTheCarousel (tplPayload) {
+        const ret = {};
+
+        if (tplPayload.elements.length > 1) {
+            Object.assign(ret, {
+                attachmentLayout: tplPayload.template_type === 'list' || tplPayload.sharable
+                    ? 'list'
+                    : 'carousel'
+            });
+        }
+
+        const showAsHeroCards = tplPayload.image_aspect_ratio !== 'square';
+        if (showAsHeroCards) {
+            Object.assign(ret, {
+                attachments: tplPayload.elements
+                    .map((at) => this._makeHeroCard(
+                        at.title,
+                        at.subtitle,
+                        null,
+                        at.image_url,
+                        at.default_action,
+                        at.buttons
+                    ))
+            });
+
+            return ret;
+        }
+
+        const horizontal = tplPayload.sharable;
+
+        Object.assign(ret, {
+            attachments: tplPayload.elements
+                .map((at) => this._makeAdaptiveCard(
+                    horizontal,
+                    at.title,
+                    at.subtitle,
+                    at.image_url,
+                    at.default_action,
+                    at.buttons
+                ))
+        });
+
+        return ret;
+    }
+
     /**
      *
      * @param {object} tplPayload
@@ -111,29 +305,9 @@ class BotServiceSender extends ReturnSender {
         };
         switch (tplPayload.template_type) {
             case 'generic':
-            case 'list': {
-                if (tplPayload.elements.length > 1) {
-                    Object.assign(ret, {
-                        attachmentLayout: tplPayload.template_type === 'list'
-                            ? 'list'
-                            : 'carousel'
-                    });
-                }
-
-                Object.assign(ret, {
-                    attachments: tplPayload.elements
-                        .map((at) => this._makeHeroCard(
-                            at.title,
-                            at.subtitle,
-                            null,
-                            at.image_url,
-                            at.default_action,
-                            at.buttons
-                        ))
-                });
-
+            case 'list':
+                Object.assign(ret, this._doTheCarousel(tplPayload));
                 return ret;
-            }
 
             case 'button': {
                 Object.assign(ret, {
@@ -347,7 +521,7 @@ class BotServiceSender extends ReturnSender {
 
             return res;
         } catch (e) {
-            // @todo throw "disconnected error"
+            // @todo throw disconnected error
             throw e;
         }
     }

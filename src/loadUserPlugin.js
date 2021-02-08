@@ -35,29 +35,25 @@ const request = require('request-promise-native');
 async function loadUserPlugin (req, res) {
 
     // @ts-ignore
-    const conversationId = req._conversationId;
-    // @ts-ignore
-    const { serviceUrl, conversation } = req.original_event || {};
+    const { serviceUrl, conversation } = req.event.original_event || {};
     const { absToken } = res.data;
 
-    if (!req.state.user && conversationId && absToken
-            && conversation && conversation.conversationType === 'personal') {
+    if (!req.state.user && conversation && absToken
+            && conversation.id && conversation.conversationType === 'personal') {
         try {
             const { members = [] } = await request({
-                url: `${serviceUrl.replace(/\/$/, '')}/v3/conversations/${conversationId}/pagedmembers`,
+                url: `${serviceUrl.replace(/\/$/, '')}/v3/conversations/${conversation.id}/pagedmembers`,
                 json: true,
                 headers: {
                     Authorization: `Bearer ${absToken}`
                 }
             });
 
-            if (members[0]) {
-                // name property is used by wingbot designer
-                const [user] = members;
+            // name property is used by wingbot designer
+            const [user] = members;
 
-                Object.assign(req.state, { user });
-                res.setState({ user });
-            }
+            Object.assign(req.state, { user });
+            res.setState({ user });
 
         } catch (e) {
             // eslint-disable-next-line no-console
