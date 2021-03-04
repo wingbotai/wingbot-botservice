@@ -32,7 +32,7 @@ class BotService {
      * @param {Processor} processor - wingbot Processor instance
      * @param {object} options
      * @param {string} options.appId - botservice client id
-     * @param {string} options.appSecret - botservice client secret
+     * @param {string|Promise<string>} options.appSecret - botservice client secret
      * @param {string} [options.grantType] - boservice authentication grant_type
      * @param {string} [options.scope] - boservice authentication scope
      * @param {string} [options.uri] - boservice authentication uri
@@ -73,12 +73,14 @@ class BotService {
             uri, grantType, appId, appSecret, scope
         } = this._options;
 
+        const csi = await Promise.resolve(appSecret);
+
         const data = await this._request({
             uri,
             form: {
                 grant_type: grantType,
                 client_id: appId,
-                client_secret: appSecret,
+                client_secret: csi,
                 scope
             },
             method: 'POST',
