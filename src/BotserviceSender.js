@@ -133,7 +133,7 @@ class BotServiceSender extends ReturnSender {
         return ret;
     }
 
-    _makeAdaptiveCard (horizontal, title, subtitle, imageUrl, defaultAction, buttons) {
+    _makeAdaptiveCard (vertical, title, subtitle, imageUrl, defaultAction, buttons) {
         const actions = buttons
             ? buttons
                 .map((b) => this._adaptiveCardAction(b))
@@ -154,7 +154,7 @@ class BotServiceSender extends ReturnSender {
             body: []
         };
 
-        if (horizontal) {
+        if (vertical) {
             const bodyContent = {
                 type: 'ColumnSet',
                 columns: []
@@ -216,12 +216,12 @@ class BotServiceSender extends ReturnSender {
                             ...(image ? [image] : []),
                             {
                                 type: 'TextBlock',
-                                text: '42 miles away',
+                                text: title,
                                 weight: 'bolder'
                             },
                             ...(subtitle ? [{
                                 type: 'TextBlock',
-                                text: 'Gig Harbor, WA 98335',
+                                text: subtitle,
                                 spacing: 'none',
                                 wrap: true
                             }] : [])
@@ -277,12 +277,12 @@ class BotServiceSender extends ReturnSender {
             return ret;
         }
 
-        const horizontal = tplPayload.sharable;
+        const vertical = tplPayload.sharable;
 
         Object.assign(ret, {
             attachments: tplPayload.elements
                 .map((at) => this._makeAdaptiveCard(
-                    horizontal,
+                    vertical,
                     at.title,
                     at.subtitle,
                     at.image_url,
