@@ -46,6 +46,50 @@ const PAGE_ID = 'pageid';
 
 describe('<BotService>', function () {
 
+    it('should strip html tags', async () => {
+        const bot = new Router();
+
+        bot.use((r, res) => {
+            res.text(r.text());
+        });
+
+        const t = new Tester(bot);
+
+        const sendFnMock = createSendMock();
+
+        const botService = new BotService(t.processor, {
+            appId: 'mock-id',
+            appSecret: 'mock-secret',
+            requestLib: sendFnMock
+        });
+
+        const textMessage = {
+            ...INPUT_MESSAGE,
+            text: ' <div>Hello <b>world</b></div>'
+        };
+
+        await botService.processEvent(textMessage);
+
+        assert.deepEqual(sendFnMock.secondCall.args[0], {
+            body: {
+                conversation: INPUT_MESSAGE.conversation,
+                from: INPUT_MESSAGE.recipient,
+                // locale: INPUT_MESSAGE.locale,
+                recipient: INPUT_MESSAGE.from,
+                replyToId: INPUT_MESSAGE.id,
+                type: 'message',
+                text: ' Hello world'
+            },
+            headers: {
+                Authorization: 'Bearer xyz-access-token',
+                'Content-Type': 'application/json'
+            },
+            json: true,
+            method: 'POST',
+            uri: '/direct-line-api-url/v3/conversations/BxxupSfdLSxFBLNpnEo1Pz/activities/BxxupSfdLSxFBLNpnEo1Pz|0000000'
+        });
+    });
+
     it('should treat member added message as conversation update', async () => {
         const bot = new Router();
 
@@ -60,7 +104,8 @@ describe('<BotService>', function () {
         const botService = new BotService(t.processor, {
             appId: 'mock-id',
             appSecret: 'mock-secret',
-            requestLib: sendFnMock
+            requestLib: sendFnMock,
+            disableStripHtmlTagsOnInput: true
         });
 
         const textMessage = {

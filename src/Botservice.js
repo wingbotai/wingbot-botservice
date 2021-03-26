@@ -4,6 +4,7 @@
 'use strict';
 
 const { Request } = require('wingbot');
+const striptags = require('striptags');
 const request = require('request-promise-native');
 const BotServiceSender = require('./BotServiceSender');
 const parseAttachments = require('./parseAttachments');
@@ -36,6 +37,7 @@ class BotService {
      * @param {string} [options.grantType] - boservice authentication grant_type
      * @param {string} [options.scope] - boservice authentication scope
      * @param {string} [options.uri] - boservice authentication uri
+     * @param {boolean} [options.disableStripHtmlTagsOnInput] - disable html strip on input texts
      * @param {string|null} [options.welcomeAction='start'] - conversation start emits postback
      * @param {Function} [options.requestLib] - request library replacement for testing
      * @param {string} [options.overPublic] - override public key for testing
@@ -48,7 +50,8 @@ class BotService {
             scope: 'https://api.botframework.com/.default',
             uri: 'https://login.microsoftonline.com/botframework.com/oauth2/v2.0/token',
             welcomeAction: 'start',
-            appSecret: null
+            appSecret: null,
+            disableStripHtmlTagsOnInput: false
         };
 
         Object.assign(this._options, options);
@@ -182,7 +185,11 @@ class BotService {
                 // quick reply
                 req = Request.quickReplyText(senderId, body.text, body.value.payload, timestamp);
             } else if (body.text) {
-                req = Request.text(senderId, body.text, timestamp);
+                const useText = this._options.disableStripHtmlTagsOnInput
+                    ? body.text
+                    : striptags(body.text);
+
+                req = Request.text(senderId, useText, timestamp);
             }
 
             req = parseAttachments(body, req);

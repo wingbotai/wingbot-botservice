@@ -1,6 +1,6 @@
 {
   "name": "wingbot-botservice",
-  "version": "3.9.1",
+  "version": "3.10.0",
   "description": "Microsoft BotService connector for wingbot.ai",
   "main": "src/main.js",
   "scripts": {
@@ -56,6 +56,7 @@
     "jsonwebtoken": "^8.5.1",
     "request": "^2.88.0",
     "request-promise-native": "^1.0.7",
-    "rsa-pem-from-mod-exp": "^0.8.4"
+    "rsa-pem-from-mod-exp": "^0.8.4",
+    "striptags": "^3.1.1"
   }
 }

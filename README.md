@@ -55,6 +55,13 @@ it redirects user</p>
 </dd>
 </dl>
 
+## Typedefs
+
+<dl>
+<dt><a href="#Processor">Processor</a> : <code>object</code></dt>
+<dd></dd>
+</dl>
+
 <a name="BotService"></a>
 
 ## BotService
@@ -64,7 +71,7 @@ BotService connector for wingbot.ai
 
 * [BotService](#BotService)
     * [new BotService(processor, options, [senderLogger])](#new_BotService_new)
-    * [.processEvent(body)](#BotService+processEvent) ⇒ <code>Promise.&lt;Array.&lt;{message:Object, pageId:string}&gt;&gt;</code>
+    * [.processEvent(body)](#BotService+processEvent) ⇒ <code>Promise.&lt;Array.&lt;{message:object, pageId:string}&gt;&gt;</code>
     * [.verifyRequest(body, headers)](#BotService+verifyRequest) ⇒ <code>Promise</code>
 
 <a name="new_BotService_new"></a>
@@ -73,13 +80,14 @@ BotService connector for wingbot.ai
 
 | Param | Type | Default | Description |
 | --- | --- | --- | --- |
-| processor | <code>Processor</code> |  | wingbot Processor instance |
-| options | <code>Object</code> |  |  |
+| processor | [<code>Processor</code>](#Processor) |  | wingbot Processor instance |
+| options | <code>object</code> |  |  |
 | options.appId | <code>string</code> |  | botservice client id |
-| options.appSecret | <code>string</code> |  | botservice client secret |
+| options.appSecret | <code>string</code> \| <code>Promise.&lt;string&gt;</code> |  | botservice client secret |
 | [options.grantType] | <code>string</code> |  | boservice authentication grant_type |
 | [options.scope] | <code>string</code> |  | boservice authentication scope |
 | [options.uri] | <code>string</code> |  | boservice authentication uri |
+| [options.disableStripHtmlTagsOnInput] | <code>boolean</code> |  | disable html strip on input texts |
 | [options.welcomeAction] | <code>string</code> \| <code>null</code> | <code>&quot;&#x27;start&#x27;&quot;</code> | conversation start emits postback |
 | [options.requestLib] | <code>function</code> |  | request library replacement for testing |
 | [options.overPublic] | <code>string</code> |  | override public key for testing |
@@ -87,11 +95,11 @@ BotService connector for wingbot.ai
 
 <a name="BotService+processEvent"></a>
 
-### botService.processEvent(body) ⇒ <code>Promise.&lt;Array.&lt;{message:Object, pageId:string}&gt;&gt;</code>
+### botService.processEvent(body) ⇒ <code>Promise.&lt;Array.&lt;{message:object, pageId:string}&gt;&gt;</code>
 Process Facebook request
 
 **Kind**: instance method of [<code>BotService</code>](#BotService)  
-**Returns**: <code>Promise.&lt;Array.&lt;{message:Object, pageId:string}&gt;&gt;</code> - - unprocessed events  
+**Returns**: <code>Promise.&lt;Array.&lt;{message:object, pageId:string}&gt;&gt;</code> - - unprocessed events  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -110,8 +118,8 @@ Verify Facebook webhook event
 
 | Param | Type | Description |
 | --- | --- | --- |
-| body | <code>Object</code> | parsed request body |
-| headers | <code>Object</code> | request headers |
+| body | <code>string</code> \| <code>Buffer</code> | parsed request body |
+| headers | <code>object</code> | request headers |
 
 <a name="botServiceQuickReplyPatch"></a>
 
@@ -145,3 +153,12 @@ bot.use('start', (req, res) => {
     });
 });
 ```
+<a name="Processor"></a>
+
+## Processor : <code>object</code>
+**Kind**: global typedef  
+
+| Param | Type |
+| --- | --- |
+| processMessage | <code>function</code> | 
+
