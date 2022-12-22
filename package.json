@@ -53,7 +53,7 @@
     "wingbot": ">=3.7.7"
   },
   "dependencies": {
-    "jsonwebtoken": "^8.5.1",
+    "jsonwebtoken": "^9.0.0",
     "request": "^2.88.0",
     "request-promise-native": "^1.0.7",
     "rsa-pem-from-mod-exp": "^0.8.4",
